@@ -1,0 +1,255 @@
+{% extends 'admin/space_base.html.twig' %}
+
+{% block title %}Presupuesto #{{ presupuesto.id }}{% endblock %}
+{% block breadcrumb %}
+    <a href="{{ path('app_admin_presupuestos') }}" style="color:var(--muted); text-decoration:none;">Presupuestos</a>
+    &nbsp;/&nbsp;<strong>#{{ presupuesto.id }}</strong>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .badge-amber  { background:rgba(255,179,0,.12);  color:#ffb300;       border:1px solid rgba(255,179,0,.3);  }
+    .badge-danger { background:rgba(255,77,109,.12); color:var(--danger);  border:1px solid rgba(255,77,109,.3); }
+
+    .detail-grid {
+        display: grid; grid-template-columns: 1fr 300px;
+        gap: 24px; align-items: start;
+    }
+    @media (max-width:880px) { .detail-grid { grid-template-columns:1fr; } }
+
+    .info-section { margin-bottom: 20px; }
+    .info-label {
+        font-size: 10px; font-weight: 600; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .info-value { font-size: 15px; font-weight: 500; color: var(--text); }
+    .info-value.cyan  { color: var(--cyan); font-family: monospace; font-size: 17px; }
+    .info-value.notes { font-size:14px; line-height:1.7; color:rgba(232,234,255,.7); font-style:italic; }
+
+    .info-row { display:flex; gap:24px; flex-wrap:wrap; }
+    .info-row .info-section { flex:1; min-width:140px; }
+
+    /* Status sidebar */
+    .status-sticky { position:sticky; top:calc(var(--topbar-h) + 24px); }
+    .status-actions { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+    .btn-state {
+        display:flex; align-items:center; gap:8px;
+        padding:9px 14px; border-radius:8px;
+        font-size:13px; font-weight:600; font-family:inherit;
+        cursor:pointer; border:1px solid; transition:all .18s;
+    }
+    .btn-state-processing {
+        background:rgba(0,245,255,.08); color:var(--cyan);
+        border-color:rgba(0,245,255,.3);
+    }
+    .btn-state-processing:hover {
+        background:rgba(0,245,255,.18); box-shadow:0 0 12px rgba(0,245,255,.25);
+    }
+    .btn-state-responded {
+        background:rgba(0,255,179,.08); color:var(--success);
+        border-color:rgba(0,255,179,.3);
+    }
+    .btn-state-responded:hover {
+        background:rgba(0,255,179,.18); box-shadow:0 0 12px rgba(0,255,179,.2);
+    }
+
+    /* Product card */
+    .product-preview {
+        display:flex; gap:14px; align-items:center;
+        padding:16px; background:rgba(255,255,255,.02);
+        border:1px solid rgba(0,245,255,.12); border-radius:12px;
+        margin-bottom:20px;
+    }
+    .product-preview img {
+        width:72px; height:58px; border-radius:8px;
+        object-fit:cover; flex-shrink:0;
+        border:1px solid rgba(0,245,255,.12);
+    }
+
+    #flash-zone { position:fixed; top:80px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .flash-toast { display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 20px rgba(0,0,0,.4); }
+    .flash-success { background:rgba(0,255,179,.12); border:1px solid rgba(0,255,179,.3); color:var(--success); }
+    @keyframes fadeInSlide { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="flash-zone"></div>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+    <div>
+        <div class="page-title">Solicitud de presupuesto #{{ presupuesto.id }}</div>
+        <div class="page-subtitle">Recibida el {{ presupuesto.createdAt|date('d/m/Y H:i') }}</div>
+    </div>
+    <a href="{{ path('app_admin_presupuestos') }}" class="btn btn-cyan" style="padding:8px 16px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Volver
+    </a>
+</div>
+
+<div class="detail-grid">
+
+    {# ── Main info ──────────────────────────────────────────── #}
+    <div>
+
+        {# Product #}
+        {% if presupuesto.mueble %}
+        <div class="card" style="margin-bottom:20px;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">
+                Producto solicitado
+            </div>
+            <div class="product-preview">
+                <img src="{{ presupuesto.mueble.imagenPortada }}" alt="{{ presupuesto.mueble.name }}">
+                <div>
+                    <div style="font-weight:600; font-size:15px;">{{ presupuesto.mueble.name }}</div>
+                    {% if presupuesto.mueble.category %}
+                    <div style="font-size:12px; color:var(--muted); margin-top:3px;">✦ {{ presupuesto.mueble.category.name }}</div>
+                    {% endif %}
+                    {% if presupuesto.mueble.price %}
+                    <div style="font-size:13px; color:var(--success); margin-top:4px; font-weight:600;">{{ presupuesto.mueble.price }} €</div>
+                    {% endif %}
+                </div>
+                <div style="margin-left:auto;">
+                    <a href="{{ path('app_mueble_show', {id: presupuesto.mueble.id}) }}"
+                       target="_blank" class="btn btn-cyan" style="padding:6px 12px; font-size:12px;">
+                        Ver ficha
+                        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="opacity:.7">
+                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            {% if presupuesto.selectedVariation %}
+            <div>
+                <div class="info-label">Configuración seleccionada</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+                    <span class="badge badge-violet" style="font-family:monospace; font-size:12px;">
+                        SKU: {{ presupuesto.selectedVariation.sku }}
+                    </span>
+                    {% for option in presupuesto.selectedVariation.options %}
+                    <span class="badge badge-muted" style="font-size:11px;">
+                        {% if option.type == 'color' and option.value %}
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ option.value }};margin-right:4px;border:1px solid rgba(255,255,255,.2);"></span>
+                        {% endif %}
+                        {{ option.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {# Wizard configuration #}
+        {% set modelo_labels    = {'standard2':'Sofá 2 Plazas','standard3':'Sofá 3 Plazas','chaise':'Chaise Longue','corner':'Rinconera'} %}
+        {% set tapiceria_labels = {'tela':'Tela','piel':'Piel','terciopelo':'Terciopelo'} %}
+        {% set patas_labels     = {'natural':'Madera Natural','dark':'Madera Oscura','metal-black':'Metal Negro','metal-gold':'Metal Dorado'} %}
+        {% if presupuesto.configuracionModelo or presupuesto.configuracionTapiceria or presupuesto.configuracionColor or presupuesto.configuracionPatas %}
+        <div class="card" style="margin-bottom:20px; border-color:rgba(0,245,255,.18);">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">
+                Configuración del wizard 3D
+            </div>
+            <div class="info-row">
+                {% if presupuesto.configuracionModelo %}
+                <div class="info-section">
+                    <div class="info-label">Modelo</div>
+                    <div class="info-value" style="font-size:14px;">{{ modelo_labels[presupuesto.configuracionModelo] ?? presupuesto.configuracionModelo }}</div>
+                </div>
+                {% endif %}
+                {% if presupuesto.configuracionTapiceria %}
+                <div class="info-section">
+                    <div class="info-label">Tapicería</div>
+                    <div class="info-value" style="font-size:14px;">{{ tapiceria_labels[presupuesto.configuracionTapiceria] ?? presupuesto.configuracionTapiceria }}</div>
+                </div>
+                {% endif %}
+                {% if presupuesto.configuracionColor %}
+                <div class="info-section">
+                    <div class="info-label">Color</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                        <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:{{ presupuesto.configuracionColor }};border:2px solid rgba(255,255,255,.2);flex-shrink:0;"></span>
+                        <span class="info-value" style="font-size:13px; font-family:monospace;">{{ presupuesto.configuracionColor }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% if presupuesto.configuracionPatas %}
+                <div class="info-section">
+                    <div class="info-label">Patas</div>
+                    <div class="info-value" style="font-size:14px;">{{ patas_labels[presupuesto.configuracionPatas] ?? presupuesto.configuracionPatas }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Customer #}
+        <div class="card" style="margin-bottom:20px;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">
+                Datos del cliente
+            </div>
+            <div class="info-row">
+                <div class="info-section">
+                    <div class="info-label">Nombre</div>
+                    <div class="info-value">{{ presupuesto.customerName }}</div>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">
+                        <a href="mailto:{{ presupuesto.customerEmail }}" style="color:var(--cyan); text-decoration:none;">
+                            {{ presupuesto.customerEmail }}
+                        </a>
+                    </div>
+                </div>
+                {% if presupuesto.customerPhone %}
+                <div class="info-section">
+                    <div class="info-label">Teléfono</div>
+                    <div class="info-value">
+                        <a href="tel:{{ presupuesto.customerPhone }}" style="color:var(--cyan); text-decoration:none;">
+                            {{ presupuesto.customerPhone }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Notes #}
+        {% if presupuesto.notes %}
+        <div class="card">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">
+                Notas del cliente
+            </div>
+            <div class="info-value notes">{{ presupuesto.notes|nl2br }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Status sidebar ────────────────────────────────────── #}
+    <div class="status-sticky">
+        <div class="card" style="border-color:rgba(0,245,255,.18);">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">
+                Estado de la solicitud
+            </div>
+
+            <div id="presupuesto-status-block-{{ presupuesto.id }}">
+                {% include 'admin/_presupuesto_status_block.html.twig' %}
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:16px; border-color:rgba(0,245,255,.1);">
+            <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">Fechas</div>
+            <div class="info-section">
+                <div class="info-label">Recibida</div>
+                <div class="info-value" style="font-size:13px;">{{ presupuesto.createdAt|date('d/m/Y H:i') }}</div>
+            </div>
+            <div class="info-section" style="margin-bottom:0;">
+                <div class="info-label">Última actualización</div>
+                <div class="info-value" style="font-size:13px;">{{ presupuesto.updatedAt|date('d/m/Y H:i') }}</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+<turbo-frame id="product-grid" class="block">
+
+    <div class="flex items-center justify-end mb-6 min-h-[1.5rem]">
+        <span class="text-sm text-gray-400">
+            {{ products|length }} resultado{{ products|length != 1 ? 's' : '' }}
+        </span>
+    </div>
+
+    {% if products is empty %}
+        <div class="text-center py-20 text-gray-400">
+            <p class="text-2xl font-bold mb-2">Sin resultados</p>
+            <p class="text-sm">Prueba a cambiar los filtros de búsqueda.</p>
+        </div>
+    {% else %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for product in products %}
+                {% set mainImage = product.mainImage %}
+                <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col">
+
+                    <div class="overflow-hidden bg-gray-100 h-56">
+                        <img
+                            src="{{ mainImage ? mainImage.url : 'https://placehold.co/600x400?text=Sin+Foto' }}"
+                            alt="{{ mainImage ? mainImage.altText ?? product.name : product.name }}"
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        >
+                    </div>
+
+                    <div class="p-6 flex flex-col flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-bold tracking-wider text-indigo-600 uppercase">
+                                {{ product.category.name }}
+                            </span>
+                            {% if product.price %}
+                                <span class="text-lg font-extrabold text-gray-900">
+                                    {{ product.price|number_format(2, ',', '.') }} €
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ product.name }}</h3>
+
+                        <p class="text-gray-500 text-sm line-clamp-2 mb-3 flex-1">
+                            {{ product.description ?? 'Sin descripción.' }}
+                        </p>
+
+                        {% if product.width or product.height or product.depth %}
+                            <p class="text-xs text-gray-400 font-mono mb-4">
+                                {{ product.dimensionsLabel }}
+                            </p>
+                        {% endif %}
+
+                        <a href="{{ path('app_product_show', {'id': product.id}) }}"
+                           class="block text-center w-full bg-gray-900 text-white font-semibold py-3 rounded-xl hover:bg-indigo-600 transition-colors duration-300 text-sm mt-auto">
+                            Ver producto
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</turbo-frame>

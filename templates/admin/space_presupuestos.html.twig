@@ -1,0 +1,210 @@
+{% extends 'admin/space_base.html.twig' %}
+
+{% block title %}Presupuestos{% endblock %}
+{% block breadcrumb %}Presupuestos{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .badge-amber  { background: rgba(255,179,0,.12);  color: #ffb300;       border: 1px solid rgba(255,179,0,.3);  }
+    .badge-danger { background: rgba(255,77,109,.12); color: var(--danger);  border: 1px solid rgba(255,77,109,.3); }
+
+    .filter-bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
+    .filter-bar input, .filter-bar select {
+        background: rgba(255,255,255,.05); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); padding: 8px 14px;
+        font-size: 13px; font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    .filter-bar input { width: 280px; }
+    .filter-bar input:focus, .filter-bar select:focus { border-color: rgba(0,245,255,.5); }
+    .filter-bar select option { background: #10103a; }
+
+    .customer-name  { font-weight: 500; }
+    .customer-email { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .date-cell      { font-size: 12px; color: var(--muted); }
+    .product-cell   { font-size: 13px; font-weight: 500; color: var(--cyan); }
+    .notes-preview  { font-size: 11px; color: var(--muted); max-width: 200px;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .btn-detail {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 5px 12px; border-radius: 6px; font-size: 12px;
+        font-weight: 600; font-family: inherit; cursor: pointer;
+        background: rgba(0,245,255,.08); color: var(--cyan);
+        border: 1px solid rgba(0,245,255,.25); text-decoration: none;
+        transition: all .18s;
+    }
+    .btn-detail:hover { background: rgba(0,245,255,.18); box-shadow: 0 0 10px rgba(0,245,255,.2); }
+
+    .pagination { display:flex; gap:6px; justify-content:center; padding-top:20px; }
+    .page-btn {
+        min-width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+        border-radius:7px; font-size:13px; font-weight:500;
+        border:1px solid var(--border); color:var(--muted);
+        text-decoration:none; transition:all .15s;
+    }
+    .page-btn:hover  { border-color:rgba(0,245,255,.4); color:var(--cyan); }
+    .page-btn.active { background:rgba(0,245,255,.12); border-color:rgba(0,245,255,.4); color:var(--cyan); }
+    .page-btn.disabled { opacity:.35; pointer-events:none; }
+
+    #flash-zone { position:fixed; top:80px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .flash-toast {
+        display:flex; align-items:center; gap:8px;
+        padding:10px 16px; border-radius:8px; font-size:13px;
+        font-weight:500; box-shadow:0 4px 20px rgba(0,0,0,.4);
+    }
+    .flash-success { background:rgba(0,255,179,.12); border:1px solid rgba(0,255,179,.3); color:var(--success); }
+    @keyframes fadeInSlide { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="flash-zone">
+    {% for msg in app.flashes('success') %}
+    <div class="flash-toast flash-success">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+    <div>
+        <h1 class="page-title">Presupuestos</h1>
+        <p class="page-subtitle">{{ pager.total }} solicitud{{ pager.total != 1 ? 'es' : '' }} recibida{{ pager.total != 1 ? 's' : '' }}</p>
+    </div>
+</div>
+
+<form method="get" action="{{ path('app_admin_presupuestos') }}">
+    <div class="filter-bar">
+        <input type="text" name="q" value="{{ filters.q }}"
+               placeholder="Buscar por cliente, email o producto…"
+               oninput="this.form.requestSubmit()">
+
+        <select name="status" onchange="this.form.requestSubmit()">
+            <option value="">Todos los estados</option>
+            {% for s in statuses %}
+                <option value="{{ s.value }}" {{ filters.status == s.value ? 'selected' : '' }}>
+                    {{ s.icon }} {{ s.label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        {% if filters.q or filters.status %}
+        <a href="{{ path('app_admin_presupuestos') }}" class="btn-detail"
+           style="border-color:rgba(255,77,109,.3);color:var(--danger);background:rgba(255,77,109,.06);">
+            ✕ Limpiar
+        </a>
+        {% endif %}
+    </div>
+</form>
+
+<turbo-frame id="presupuestos-list">
+    <div class="card card-cyan">
+        {% if pager.items is empty %}
+            <div style="text-align:center; padding:64px 24px; color:var(--muted);">
+                <div style="font-size:44px; margin-bottom:14px;">📋</div>
+                <div style="font-size:15px; font-weight:600; margin-bottom:6px;">Sin solicitudes todavía</div>
+                <div style="font-size:13px;">Aparecerán aquí cuando los clientes pidan presupuesto.</div>
+            </div>
+        {% else %}
+            <table class="space-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px; padding-left:16px;">#</th>
+                        <th>Cliente</th>
+                        <th>Producto</th>
+                        <th>Configuración</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for presupuesto in pager.items %}
+                    <tr id="presupuesto-row-{{ presupuesto.id }}">
+                        <td style="padding-left:16px; font-family:monospace; font-size:11px; color:var(--muted);">
+                            #{{ presupuesto.id }}
+                        </td>
+                        <td>
+                            <div class="customer-name">{{ presupuesto.customerName }}</div>
+                            <div class="customer-email">{{ presupuesto.customerEmail }}</div>
+                            {% if presupuesto.customerPhone %}
+                            <div class="customer-email">{{ presupuesto.customerPhone }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="product-cell">
+                            {% if presupuesto.mueble %}
+                                {{ presupuesto.mueble.name }}
+                                {% if presupuesto.mueble.category %}
+                                <div style="font-size:11px; color:var(--muted); font-weight:400;">
+                                    {{ presupuesto.mueble.category.name }}
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <span style="color:var(--muted);">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set ml = {'standard2':'2 Plazas','standard3':'3 Plazas','chaise':'Chaise','corner':'Rinconera'} %}
+                            {% set tl = {'tela':'Tela','piel':'Piel','terciopelo':'Terciopelo'} %}
+                            {% set pl = {'natural':'M. Natural','dark':'M. Oscura','metal-black':'Metal Negro','metal-gold':'Metal Dorado'} %}
+                            {% if presupuesto.configuracionModelo or presupuesto.configuracionTapiceria or presupuesto.configuracionColor or presupuesto.configuracionPatas %}
+                            <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+                                {% if presupuesto.configuracionModelo %}
+                                <span class="badge badge-muted" style="font-size:10px;">{{ ml[presupuesto.configuracionModelo] ?? presupuesto.configuracionModelo }}</span>
+                                {% endif %}
+                                {% if presupuesto.configuracionTapiceria %}
+                                <span class="badge badge-muted" style="font-size:10px;">{{ tl[presupuesto.configuracionTapiceria] ?? presupuesto.configuracionTapiceria }}</span>
+                                {% endif %}
+                                {% if presupuesto.configuracionColor %}
+                                <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:{{ presupuesto.configuracionColor }};border:1.5px solid rgba(255,255,255,.2);flex-shrink:0;" title="{{ presupuesto.configuracionColor }}"></span>
+                                {% endif %}
+                                {% if presupuesto.configuracionPatas %}
+                                <span class="badge badge-muted" style="font-size:10px;">{{ pl[presupuesto.configuracionPatas] ?? presupuesto.configuracionPatas }}</span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span style="color:var(--muted); font-size:11px;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span id="presupuesto-badge-{{ presupuesto.id }}">
+                                {% include 'admin/_presupuesto_status_badge.html.twig' %}
+                            </span>
+                        </td>
+                        <td class="date-cell">{{ presupuesto.createdAt|date('d/m/Y') }}</td>
+                        <td>
+                            <a href="{{ path('app_admin_presupuesto_show', {id: presupuesto.id}) }}"
+                               class="btn-detail" data-turbo-frame="_top">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if pager.pages > 1 %}
+            <div class="pagination">
+                <a href="{{ path('app_admin_presupuestos', filters|merge({page: pager.page - 1})) }}"
+                   class="page-btn {{ pager.page <= 1 ? 'disabled' : '' }}"
+                   data-turbo-frame="presupuestos-list">‹</a>
+                {% for p in 1..pager.pages %}
+                    <a href="{{ path('app_admin_presupuestos', filters|merge({page: p})) }}"
+                       class="page-btn {{ p == pager.page ? 'active' : '' }}"
+                       data-turbo-frame="presupuestos-list">{{ p }}</a>
+                {% endfor %}
+                <a href="{{ path('app_admin_presupuestos', filters|merge({page: pager.page + 1})) }}"
+                   class="page-btn {{ pager.page >= pager.pages ? 'disabled' : '' }}"
+                   data-turbo-frame="presupuestos-list">›</a>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</turbo-frame>
+
+{% endblock %}

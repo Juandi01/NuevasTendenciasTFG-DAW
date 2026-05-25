@@ -1,0 +1,25 @@
+<div id="media-img-{{ media.id }}" class="img-card">
+    <div class="img-preview">
+        <img src="{{ '/uploads/images/' ~ media.imageName }}"
+             alt="{{ media.altText }}"
+             loading="lazy">
+        {% if media.isPortada %}
+            <span class="img-portada-badge">Portada</span>
+        {% endif %}
+    </div>
+    <div class="img-meta">
+        <div class="img-meta-name" title="{{ media.altText }}">{{ media.altText|slice(0,22) }}{% if media.altText|length > 22 %}…{% endif %}</div>
+        {% if media.imageSize %}
+            <div class="img-meta-size">{{ (media.imageSize / 1024)|round(0) }} KB</div>
+        {% endif %}
+    </div>
+    <form method="post" action="{{ path('app_admin_media_image_delete', {id: media.id}) }}"
+          onsubmit="return confirm('¿Eliminar esta imagen?')" class="img-delete-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('del-img-' ~ media.id) }}">
+        <button type="submit" class="img-delete-btn" title="Eliminar">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+    </form>
+</div>

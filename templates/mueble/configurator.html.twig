@@ -1,0 +1,1496 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configurador 3D · Nuevas Tendencias{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Full-page shell ─────────────────────────────────────────── */
+.cfg-shell {
+    display: flex;
+    height: calc(100dvh - var(--nav-h, 72px));
+    overflow: hidden;
+    position: relative;
+}
+
+/* ── 3D Viewer (60%) ─────────────────────────────────────────── */
+.cfg-viewer {
+    flex: 0 0 60%;
+    position: relative;
+    background: #03030f;
+    overflow: hidden;
+}
+
+/* Nebula blob inside viewer */
+.cfg-viewer::before {
+    content: '';
+    position: absolute;
+    width: 70%; height: 70%;
+    top: -20%; left: -10%;
+    background: radial-gradient(ellipse,
+        rgba(123,47,255,.14) 0%,
+        rgba(0,245,255,.06) 40%,
+        transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    animation: nebDrift1 55s ease-in-out infinite alternate;
+}
+.cfg-viewer::after {
+    content: '';
+    position: absolute;
+    width: 50%; height: 50%;
+    bottom: -10%; right: 5%;
+    background: radial-gradient(ellipse,
+        rgba(0,245,255,.10) 0%,
+        rgba(123,47,255,.05) 40%,
+        transparent 70%);
+    filter: blur(50px);
+    pointer-events: none;
+    animation: nebDrift2 70s ease-in-out infinite alternate;
+}
+
+.cfg-viewer canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    cursor: grab;
+}
+.cfg-viewer canvas:active { cursor: grabbing; }
+
+/* Viewer overlays */
+.viewer-badge {
+    position: absolute;
+    top: 20px; left: 20px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(0,245,255,.25);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--cyan);
+    pointer-events: none;
+}
+.viewer-badge::before {
+    content: '●';
+    color: var(--cyan);
+    animation: viewerPulse 2s ease-in-out infinite;
+    font-size: 8px;
+}
+@keyframes viewerPulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.viewer-hint {
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    font-size: 11px; color: rgba(220,224,255,.55);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* Divider glow line */
+.cfg-divider {
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(0,245,255,.3) 30%, rgba(123,47,255,.3) 70%, transparent);
+    flex-shrink: 0;
+}
+
+/* ── Wizard panel (40%) ──────────────────────────────────────── */
+.cfg-wizard {
+    flex: 0 0 calc(40% - 1px);
+    background: linear-gradient(160deg, #06061a 0%, #08082a 100%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Wizard top: step label + title */
+.wiz-head {
+    padding: 28px 32px 0;
+    flex-shrink: 0;
+}
+.wiz-step-eyebrow {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+}
+.wiz-step-title {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--text, #e8eaff);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+.wiz-step-sub {
+    font-size: 13px; color: var(--muted, #6b6b9a);
+    line-height: 1.5;
+}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.wiz-progress {
+    padding: 20px 32px 0;
+    flex-shrink: 0;
+}
+.progress-track-wrap {
+    position: relative;
+    height: 4px;
+    background: rgba(255,255,255,.07);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: visible;
+}
+.progress-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    box-shadow: 0 0 10px rgba(0,245,255,.5);
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+}
+.progress-dots {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    top: -18px;
+    padding: 0 1px;
+}
+.prog-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    border: 2px solid rgba(255,255,255,.12);
+    background: #06061a;
+    color: var(--muted, #6b6b9a);
+    transition: all .3s;
+    position: relative;
+    cursor: default;
+    user-select: none;
+}
+.prog-dot[data-state="done"] {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,.15);
+    color: var(--cyan);
+}
+.prog-dot[data-state="active"] {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,.2);
+    color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0,245,255,.45);
+}
+.prog-dot[data-state="done"]::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--cyan);
+}
+.prog-dot[data-state="done"] span { display: none; }
+
+/* ── Step content area ───────────────────────────────────────── */
+.wiz-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 32px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,245,255,.2) transparent;
+}
+.wiz-body::-webkit-scrollbar { width: 4px; }
+.wiz-body::-webkit-scrollbar-thumb { background: rgba(0,245,255,.2); border-radius: 4px; }
+
+.step-section-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted, #6b6b9a);
+    margin: 14px 0 10px;
+}
+
+/* ── Model cards (3 columns for 9 products) ──────────────────── */
+.model-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+.model-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .2s;
+    user-select: none;
+}
+.model-card:hover {
+    border-color: rgba(0,245,255,.3);
+    background: rgba(0,245,255,.05);
+}
+.model-card.sel-active {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,.1);
+    box-shadow: 0 0 18px rgba(0,245,255,.2), inset 0 1px 0 rgba(0,245,255,.2);
+}
+.model-card-icon {
+    width: 100%;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.model-card-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--text, #e8eaff);
+    margin-bottom: 3px;
+}
+.model-card-hint {
+    font-size: 10px; color: var(--muted, #6b6b9a);
+    line-height: 1.4;
+}
+.model-card.sel-active .model-card-name { color: var(--cyan); }
+.model-card.sel-active .sel-check { opacity: 1; }
+.sel-check {
+    float: right;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--cyan);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #000; font-weight: 800;
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+/* SVG sofa icons */
+.sofa-svg { width: 62px; height: 44px; }
+
+/* ── Upholstery cards ────────────────────────────────────────── */
+.upholstery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.uph-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    user-select: none;
+}
+.uph-card:hover {
+    border-color: rgba(0,245,255,.3);
+    background: rgba(0,245,255,.05);
+}
+.uph-card.sel-active {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,.1);
+    box-shadow: 0 0 18px rgba(0,245,255,.2);
+}
+.uph-preview {
+    width: 100%; height: 52px;
+    border-radius: 10px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,.06);
+    overflow: hidden;
+    position: relative;
+}
+.uph-tela {
+    background:
+        repeating-linear-gradient(45deg,  rgba(180,165,150,.18) 0px, rgba(180,165,150,.18) 1px, transparent 1px, transparent 6px),
+        repeating-linear-gradient(-45deg, rgba(180,165,150,.18) 0px, rgba(180,165,150,.18) 1px, transparent 1px, transparent 6px),
+        #8a7060;
+}
+.uph-piel {
+    background: linear-gradient(160deg, #a0714a 0%, #7a5233 40%, #a0714a 60%, #7a5233 100%);
+}
+.uph-terciopelo {
+    background: linear-gradient(135deg,
+        #4a2a6a 0%, #3d235a 25%, #522e75 50%, #3d235a 75%, #4a2a6a 100%);
+}
+.uph-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--text, #e8eaff);
+    margin-bottom: 3px;
+}
+.uph-hint {
+    font-size: 10px; color: var(--muted, #6b6b9a);
+    line-height: 1.4;
+}
+.uph-card.sel-active .uph-name { color: var(--cyan); }
+
+/* ── Color swatches ──────────────────────────────────────────── */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.color-swatch {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    border: 2px solid rgba(255,255,255,.08);
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);
+}
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: rgba(255,255,255,.35);
+    z-index: 1;
+}
+.color-swatch.sel-active {
+    border-color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.3),
+        0 0 0 3px rgba(255,255,255,.2),
+        0 0 16px rgba(0,245,255,.4);
+    transform: scale(1.12);
+    z-index: 2;
+}
+.color-swatch.sel-active::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,.9);
+    font-size: 16px;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,.6);
+}
+.color-label {
+    font-size: 10px;
+    color: var(--muted, #6b6b9a);
+    text-align: center;
+    margin-top: 5px;
+    line-height: 1.2;
+}
+
+/* ── Legs cards ──────────────────────────────────────────────── */
+.legs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.leg-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all .2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.leg-card:hover {
+    border-color: rgba(0,245,255,.3);
+    background: rgba(0,245,255,.05);
+}
+.leg-card.sel-active {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,.1);
+    box-shadow: 0 0 18px rgba(0,245,255,.2);
+}
+.leg-preview {
+    width: 36px; height: 48px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,.1);
+    position: relative;
+    overflow: hidden;
+}
+.leg-natural    { background: linear-gradient(160deg, #b58a5a 0%, #8b6040 50%, #7a5230 100%); }
+.leg-dark       { background: linear-gradient(160deg, #3e2410 0%, #2a1a0e 50%, #1e1206 100%); }
+.leg-metal-black { background: linear-gradient(160deg, #3a3a3a 0%, #1a1a1a 50%, #0e0e0e 100%); }
+.leg-metal-gold {
+    background: linear-gradient(160deg, #e8c060 0%, #d4a840 40%, #c89020 100%);
+}
+.leg-preview::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; width: 30%;
+    height: 100%;
+    background: rgba(255,255,255,.12);
+}
+.leg-info {}
+.leg-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--text, #e8eaff);
+    margin-bottom: 2px;
+}
+.leg-card.sel-active .leg-name { color: var(--cyan); }
+
+/* ── Summary step ────────────────────────────────────────────── */
+.summary-card {
+    background: rgba(0,245,255,.04);
+    border: 1px solid rgba(0,245,255,.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+}
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(0,245,255,.12), transparent 70%);
+    pointer-events: none;
+}
+.summary-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-key {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted, #6b6b9a);
+    width: 90px; flex-shrink: 0;
+}
+.summary-val {
+    font-size: 14px; font-weight: 600;
+    color: var(--text, #e8eaff);
+    flex: 1;
+}
+.summary-color-dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.2);
+    flex-shrink: 0;
+}
+
+.summary-ctas {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+.btn-cfg {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .2s;
+}
+.btn-cfg-ghost {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.12);
+    color: var(--muted, #6b6b9a);
+}
+.btn-cfg-ghost:hover {
+    background: rgba(255,255,255,.08);
+    color: var(--text, #e8eaff);
+}
+.btn-cfg-primary {
+    background: linear-gradient(135deg, rgba(0,245,255,.18), rgba(123,47,255,.18));
+    border: 1px solid rgba(0,245,255,.4);
+    color: var(--cyan, #00f5ff);
+    box-shadow: 0 0 20px rgba(0,245,255,.15);
+}
+.btn-cfg-primary:hover {
+    box-shadow: 0 0 30px rgba(0,245,255,.3);
+    border-color: var(--cyan);
+}
+
+/* ── Wizard footer / nav ─────────────────────────────────────── */
+.wiz-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 32px 20px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+    gap: 12px;
+}
+.btn-wiz-prev {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted, #6b6b9a);
+    transition: all .18s;
+}
+.btn-wiz-prev:hover {
+    background: rgba(255,255,255,.08);
+    color: var(--text, #e8eaff);
+}
+.btn-wiz-prev:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+}
+.btn-wiz-next {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--cyan, #00f5ff), var(--violet, #7b2fff));
+    border: none;
+    color: #06060f;
+    box-shadow: 0 0 24px rgba(0,245,255,.3), 0 4px 16px rgba(123,47,255,.25);
+    transition: all .22s;
+}
+.btn-wiz-next:hover {
+    box-shadow: 0 0 38px rgba(0,245,255,.5), 0 6px 22px rgba(123,47,255,.4);
+    transform: translateY(-1px);
+}
+
+/* ── Summary grid (step 5) ───────────────────────────────────── */
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.sum-item {
+    background: rgba(0,245,255,.04);
+    border: 1px solid rgba(0,245,255,.12);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+.sum-item::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle, rgba(0,245,255,.08), transparent 70%);
+    pointer-events: none;
+}
+.sum-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+.sum-color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.2);
+    flex-shrink: 0;
+}
+.sum-label {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted, #6b6b9a);
+}
+.sum-value {
+    font-size: 13px; font-weight: 600;
+    color: var(--text, #e8eaff);
+    line-height: 1.2;
+}
+
+.step5-ctas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+.btn-presupuesto {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(0,245,255,.15), rgba(123,47,255,.15));
+    border: 1px solid rgba(0,245,255,.5);
+    color: var(--cyan, #00f5ff);
+    box-shadow: 0 0 24px rgba(0,245,255,.2), inset 0 1px 0 rgba(0,245,255,.1);
+    transition: all .22s;
+    text-shadow: 0 0 12px rgba(0,245,255,.6);
+    letter-spacing: .03em;
+}
+.btn-presupuesto:hover {
+    box-shadow: 0 0 40px rgba(0,245,255,.4), inset 0 1px 0 rgba(0,245,255,.2);
+    border-color: var(--cyan);
+    transform: translateY(-1px);
+}
+.btn-reconfigurar {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 12px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted, #6b6b9a);
+    transition: all .18s;
+}
+.btn-reconfigurar:hover {
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+}
+
+/* ── Modal overlay ───────────────────────────────────────────── */
+.cfg-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    background: rgba(3, 3, 20, .78);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+}
+.cfg-modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+.cfg-modal {
+    background: linear-gradient(145deg, #07071e, #0b0b2a);
+    border: 1px solid rgba(0,245,255,.22);
+    border-radius: 22px;
+    padding: 32px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow:
+        0 0 60px rgba(0,245,255,.12),
+        0 0 120px rgba(123,47,255,.08),
+        0 24px 64px rgba(0,0,0,.6);
+    transform: translateY(16px) scale(.97);
+    transition: transform .28s cubic-bezier(.34,1.56,.64,1);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,245,255,.2) transparent;
+}
+.cfg-modal-overlay.open .cfg-modal {
+    transform: translateY(0) scale(1);
+}
+.modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .18s;
+    font-family: inherit;
+}
+.modal-close:hover { background: rgba(255,255,255,.12); color: var(--text); }
+
+.modal-title {
+    font-size: 18px; font-weight: 700;
+    color: var(--text, #e8eaff);
+    margin-bottom: 4px;
+    padding-right: 40px;
+}
+.modal-sub {
+    font-size: 12px; color: var(--muted, #6b6b9a);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+.modal-config-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(0,245,255,.04);
+    border: 1px solid rgba(0,245,255,.1);
+    border-radius: 10px;
+}
+.modal-pill {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(0,245,255,.1);
+    border: 1px solid rgba(0,245,255,.2);
+    color: var(--cyan);
+    letter-spacing: .04em;
+}
+.modal-field {
+    margin-bottom: 12px;
+}
+.modal-field label {
+    display: block;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted, #6b6b9a);
+    margin-bottom: 6px;
+}
+.modal-input {
+    width: 100%;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 9px;
+    color: var(--text, #e8eaff);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 10px 13px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    box-sizing: border-box;
+}
+.modal-input:focus {
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 2px rgba(0,245,255,.08);
+}
+textarea.modal-input { resize: vertical; min-height: 72px; }
+.modal-submit {
+    width: 100%;
+    padding: 13px;
+    border-radius: 11px;
+    border: 1px solid rgba(0,245,255,.5);
+    background: linear-gradient(135deg, rgba(0,245,255,.18), rgba(123,47,255,.18));
+    color: var(--cyan, #00f5ff);
+    font-family: inherit;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 0 24px rgba(0,245,255,.2);
+    transition: all .22s;
+    text-shadow: 0 0 10px rgba(0,245,255,.5);
+    letter-spacing: .04em;
+    margin-top: 4px;
+}
+.modal-submit:hover {
+    box-shadow: 0 0 40px rgba(0,245,255,.4);
+    transform: translateY(-1px);
+}
+.modal-submit:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+.modal-error {
+    color: #ff6b6b;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 8px;
+    display: none;
+}
+
+/* ── Success screen inside modal ─────────────────────────────── */
+.modal-success {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0;
+}
+.modal-success.show { display: flex; }
+.success-orbit {
+    position: relative;
+    width: 100px; height: 100px;
+    margin-bottom: 24px;
+}
+.success-planet {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #00f5ff, #7b2fff);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 30px rgba(0,245,255,.5);
+    animation: planetPulse 2s ease-in-out infinite;
+}
+.success-rocket {
+    font-size: 28px;
+    position: absolute;
+    animation: rocketOrbit 3s linear infinite;
+    transform-origin: 50px 50px;
+}
+@keyframes planetPulse {
+    0%,100% { box-shadow: 0 0 30px rgba(0,245,255,.5); transform: translate(-50%,-50%) scale(1); }
+    50%      { box-shadow: 0 0 50px rgba(0,245,255,.8); transform: translate(-50%,-50%) scale(1.06); }
+}
+@keyframes rocketOrbit {
+    from { transform: rotate(0deg) translateX(42px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(42px) rotate(-360deg); }
+}
+.success-title {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.success-sub {
+    font-size: 13px; color: var(--muted, #6b6b9a);
+    line-height: 1.6;
+    max-width: 300px;
+}
+.success-stars {
+    display: flex; gap: 8px;
+    margin-top: 20px;
+    font-size: 18px;
+    animation: starsFade 1.5s ease-in-out infinite alternate;
+}
+@keyframes starsFade { from { opacity: .4 } to { opacity: 1 } }
+.success-cta {
+    margin-top: 22px;
+    padding: 10px 24px;
+    border-radius: 10px;
+    background: rgba(0,245,255,.1);
+    border: 1px solid rgba(0,245,255,.3);
+    color: var(--cyan);
+    font-family: inherit;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    text-decoration: none;
+    display: inline-block;
+}
+.success-cta:hover { background: rgba(0,245,255,.18); }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .cfg-shell {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100dvh - var(--nav-h, 72px));
+    }
+    .cfg-viewer { flex: 0 0 45vh; }
+    .cfg-divider { width: 100%; height: 1px; }
+    .cfg-wizard  { flex: 1; }
+}
+@media (max-width: 500px) {
+    .model-grid   { grid-template-columns: 1fr 1fr; }
+    .color-grid   { grid-template-columns: repeat(3, 1fr); }
+    .wiz-head, .wiz-progress, .wiz-body, .wiz-nav { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div
+    data-controller="sofa-configurator"
+    data-sofa-configurator-step-value="1"
+    data-sofa-configurator-model-value="{{ productKey ?? 'orion' }}"
+    data-sofa-configurator-upholstery-value="tela"
+    data-sofa-configurator-color-value="#c4a882"
+    data-sofa-configurator-legs-value="natural"
+    class="cfg-shell"
+>
+
+    {# ── 3D VIEWER ───────────────────────────────────────────── #}
+    <div class="cfg-viewer">
+        <canvas data-sofa-configurator-target="canvas"></canvas>
+
+        <div class="viewer-badge">
+            <span id="viewer-model-label">Orión</span>
+        </div>
+
+        <div class="viewer-hint" id="drag-hint">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M8 6v6m0 0v6m0-6h8M8 12H2"/>
+            </svg>
+            Arrastra para rotar el modelo
+        </div>
+    </div>
+
+    {# ── DIVIDER ─────────────────────────────────────────────── #}
+    <div class="cfg-divider"></div>
+
+    {# ── WIZARD ──────────────────────────────────────────────── #}
+    <div class="cfg-wizard">
+
+        {# Header #}
+        <div class="wiz-head">
+            <div class="wiz-step-eyebrow">
+                PASO&nbsp;<span data-sofa-configurator-target="stepNum">1 / 4</span>
+            </div>
+            <h2 class="wiz-step-title" data-sofa-configurator-target="stepTitle">Tu modelo</h2>
+            <p class="wiz-step-sub" data-sofa-configurator-target="stepSub">
+                Elige el tipo de sofá que se adapta a tu espacio
+            </p>
+        </div>
+
+        {# Progress bar #}
+        <div class="wiz-progress">
+            <div class="progress-track-wrap">
+                <div class="progress-fill" data-sofa-configurator-target="progressFill"></div>
+            </div>
+            <div class="progress-dots">
+                {% for i in 1..4 %}
+                <div class="prog-dot"
+                     data-sofa-configurator-target="progressDot"
+                     data-dot="{{ i }}"
+                     data-state="{{ i == 1 ? 'active' : 'idle' }}">
+                    <span>{{ i }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ── Step content ──────────────────────────────────────── #}
+        <div class="wiz-body">
+
+            {# ── STEP 1 · Modelo ───────────────────────────── #}
+            <div data-sofa-configurator-target="stepPanel" data-step="1">
+
+                {# Sofás — shared 2/3-seater icon #}
+                {% set svgSofa2 %}
+                <svg class="sofa-svg" viewBox="0 0 62 44" fill="none">
+                    <rect x="4" y="22" width="54" height="10" rx="3" fill="rgba(0,245,255,.15)" stroke="rgba(0,245,255,.5)" stroke-width="1.2"/>
+                    <rect x="4" y="11" width="54" height="13" rx="3" fill="rgba(0,245,255,.08)" stroke="rgba(0,245,255,.35)" stroke-width="1.2"/>
+                    <rect x="1" y="15" width="8"  height="17" rx="2" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1"/>
+                    <rect x="53" y="15" width="8" height="17" rx="2" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1"/>
+                    <rect x="10" y="32" width="2.5" height="8" rx="1" fill="rgba(0,245,255,.4)"/>
+                    <rect x="49.5" y="32" width="2.5" height="8" rx="1" fill="rgba(0,245,255,.4)"/>
+                </svg>
+                {% endset %}
+                {% set svgCorner %}
+                <svg class="sofa-svg" viewBox="0 0 62 44" fill="none">
+                    <rect x="2" y="20" width="36" height="10" rx="3" fill="rgba(0,245,255,.15)" stroke="rgba(0,245,255,.5)" stroke-width="1.2"/>
+                    <rect x="2" y="10" width="36" height="12" rx="3" fill="rgba(0,245,255,.08)" stroke="rgba(0,245,255,.35)" stroke-width="1.2"/>
+                    <rect x="0" y="14" width="6"  height="16" rx="2" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1"/>
+                    <rect x="38" y="20" width="12" height="22" rx="3" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1.2"/>
+                    <rect x="48" y="10" width="12" height="12" rx="3" fill="rgba(0,245,255,.08)" stroke="rgba(0,245,255,.35)" stroke-width="1"/>
+                    <rect x="7"  y="30" width="2.5" height="8" rx="1" fill="rgba(0,245,255,.4)"/>
+                    <rect x="46" y="38" width="2.5" height="4" rx="1" fill="rgba(0,245,255,.4)"/>
+                </svg>
+                {% endset %}
+                {% set svgChaise %}
+                <svg class="sofa-svg" viewBox="0 0 62 44" fill="none">
+                    <rect x="2" y="18" width="30" height="10" rx="3" fill="rgba(0,245,255,.15)" stroke="rgba(0,245,255,.5)" stroke-width="1.2"/>
+                    <rect x="2" y="8"  width="30" height="12" rx="3" fill="rgba(0,245,255,.08)" stroke="rgba(0,245,255,.35)" stroke-width="1.2"/>
+                    <rect x="0" y="12" width="7"  height="16" rx="2" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1"/>
+                    <rect x="32" y="18" width="26" height="18" rx="3" fill="rgba(0,245,255,.12)" stroke="rgba(0,245,255,.4)" stroke-width="1.2"/>
+                    <rect x="55" y="20" width="5"  height="16" rx="2" fill="rgba(0,245,255,.1)" stroke="rgba(0,245,255,.3)" stroke-width="1"/>
+                    <rect x="7"  y="28" width="2.5" height="8" rx="1" fill="rgba(0,245,255,.4)"/>
+                    <rect x="56" y="36" width="2.5" height="6" rx="1" fill="rgba(0,245,255,.4)"/>
+                </svg>
+                {% endset %}
+
+                {# Macro for a product card #}
+                {% macro prodCard(key, name, hint, svg, selected) %}
+                <div class="model-card {{ selected ? 'sel-active' : '' }}"
+                     data-sofa-configurator-target="selCard"
+                     data-sel-type="model" data-sel-value="{{ key }}"
+                     data-model="{{ key }}"
+                     data-action="click->sofa-configurator#pickModel">
+                    <div class="model-card-icon">{{ svg|raw }}</div>
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+                        <div>
+                            <div class="model-card-name">{{ name }}</div>
+                            <div class="model-card-hint">{{ hint }}</div>
+                        </div>
+                        <span class="sel-check">✓</span>
+                    </div>
+                </div>
+                {% endmacro %}
+
+                <div class="step-section-label">Sofás</div>
+                <div class="model-grid">
+                    {{ _self.prodCard('orion',  'Orión',  'Sofá 3P · Orión',    svgSofa2, true) }}
+                    {{ _self.prodCard('sirio',  'Sirio',  'Sofá 3P · Sirio',    svgSofa2, false) }}
+                    {{ _self.prodCard('vega',   'Vega',   'Sofá 2P · Vega',     svgSofa2, false) }}
+                </div>
+
+                <div class="step-section-label">Rinconeras</div>
+                <div class="model-grid">
+                    {{ _self.prodCard('andromeda', 'Andrómeda', 'Rinconera · Andrómeda', svgCorner, false) }}
+                    {{ _self.prodCard('cassiopea', 'Cassiopea', 'Rinconera · Cassiopea', svgCorner, false) }}
+                    {{ _self.prodCard('nebula',    'Nebula',    'Rinconera · Nebula',    svgCorner, false) }}
+                </div>
+
+                <div class="step-section-label">Chaise Longue</div>
+                <div class="model-grid">
+                    {{ _self.prodCard('altair', 'Altair', 'Chaise · Altair', svgChaise, false) }}
+                    {{ _self.prodCard('lyra',   'Lyra',   'Chaise · Lyra',   svgChaise, false) }}
+                    {{ _self.prodCard('perseo', 'Perseo', 'Chaise · Perseo', svgChaise, false) }}
+                </div>
+
+            </div>
+
+            {# ── STEP 2 · Tapicería ────────────────────────── #}
+            <div data-sofa-configurator-target="stepPanel" data-step="2" style="display:none">
+                <div class="step-section-label">Material de tapicería</div>
+                <div class="upholstery-grid">
+
+                    <div class="uph-card sel-active"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="upholstery" data-sel-value="tela"
+                         data-upholstery="tela"
+                         data-action="click->sofa-configurator#pickUpholstery">
+                        <div class="uph-preview uph-tela"></div>
+                        <div class="uph-name">Tela</div>
+                        <div class="uph-hint">Suave · Transpirable · Fácil limpieza</div>
+                    </div>
+
+                    <div class="uph-card"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="upholstery" data-sel-value="piel"
+                         data-upholstery="piel"
+                         data-action="click->sofa-configurator#pickUpholstery">
+                        <div class="uph-preview uph-piel"></div>
+                        <div class="uph-name">Piel</div>
+                        <div class="uph-hint">Resistente · Elegante · Duradera</div>
+                    </div>
+
+                    <div class="uph-card"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="upholstery" data-sel-value="terciopelo"
+                         data-upholstery="terciopelo"
+                         data-action="click->sofa-configurator#pickUpholstery">
+                        <div class="uph-preview uph-terciopelo"></div>
+                        <div class="uph-name">Terciopelo</div>
+                        <div class="uph-hint">Lujoso · Cálido · Sofisticado</div>
+                    </div>
+
+                </div>
+            </div>
+
+            {# ── STEP 3 · Color ────────────────────────────── #}
+            <div data-sofa-configurator-target="stepPanel" data-step="3" style="display:none">
+                <div class="step-section-label">Tonos neutros</div>
+                <div class="color-grid">
+                    {% set colors = [
+                        { hex: '#c4a882', name: 'Camel' },
+                        { hex: '#ede8df', name: 'Crema' },
+                        { hex: '#9e8e80', name: 'Topo' },
+                        { hex: '#4a4a4a', name: 'Grafito' },
+                        { hex: '#2d3a6b', name: 'Azul Noche' },
+                        { hex: '#7a9e7e', name: 'Salvia' },
+                        { hex: '#3b6e8c', name: 'Denim' },
+                        { hex: '#4d5666', name: 'Pizarra' },
+                    ] %}
+                    {% for c in colors %}
+                    <div>
+                        <div class="color-swatch {{ loop.first ? 'sel-active' : '' }}"
+                             style="background: {{ c.hex }}"
+                             data-sofa-configurator-target="selCard"
+                             data-sel-type="color" data-sel-value="{{ c.hex }}"
+                             data-color="{{ c.hex }}"
+                             data-action="click->sofa-configurator#pickColor"
+                             title="{{ c.name }}">
+                        </div>
+                        <div class="color-label">{{ c.name }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="step-section-label" style="margin-top:18px;">Tonos vivos</div>
+                <div class="color-grid">
+                    {% set colors2 = [
+                        { hex: '#8c2828', name: 'Burdeos' },
+                        { hex: '#b56a4a', name: 'Terracota' },
+                        { hex: '#c4922a', name: 'Mostaza' },
+                        { hex: '#3d5c3a', name: 'Verde Musgo' },
+                    ] %}
+                    {% for c in colors2 %}
+                    <div>
+                        <div class="color-swatch"
+                             style="background: {{ c.hex }}"
+                             data-sofa-configurator-target="selCard"
+                             data-sel-type="color" data-sel-value="{{ c.hex }}"
+                             data-color="{{ c.hex }}"
+                             data-action="click->sofa-configurator#pickColor"
+                             title="{{ c.name }}">
+                        </div>
+                        <div class="color-label">{{ c.name }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# ── STEP 4 · Patas ────────────────────────────── #}
+            <div data-sofa-configurator-target="stepPanel" data-step="4" style="display:none">
+                <div class="step-section-label">Acabado de las patas</div>
+                <div class="legs-grid">
+
+                    <div class="leg-card sel-active"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="legs" data-sel-value="natural"
+                         data-legs="natural"
+                         data-action="click->sofa-configurator#pickLegs">
+                        <div class="leg-preview leg-natural"></div>
+                        <div class="leg-info">
+                            <div class="leg-name">Madera Natural</div>
+                            <div class="uph-hint">Roble · Cálido</div>
+                        </div>
+                    </div>
+
+                    <div class="leg-card"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="legs" data-sel-value="dark"
+                         data-legs="dark"
+                         data-action="click->sofa-configurator#pickLegs">
+                        <div class="leg-preview leg-dark"></div>
+                        <div class="leg-info">
+                            <div class="leg-name">Madera Oscura</div>
+                            <div class="uph-hint">Wengué · Elegante</div>
+                        </div>
+                    </div>
+
+                    <div class="leg-card"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="legs" data-sel-value="metal-black"
+                         data-legs="metal-black"
+                         data-action="click->sofa-configurator#pickLegs">
+                        <div class="leg-preview leg-metal-black"></div>
+                        <div class="leg-info">
+                            <div class="leg-name">Metal Negro</div>
+                            <div class="uph-hint">Acero · Moderno</div>
+                        </div>
+                    </div>
+
+                    <div class="leg-card"
+                         data-sofa-configurator-target="selCard"
+                         data-sel-type="legs" data-sel-value="metal-gold"
+                         data-legs="metal-gold"
+                         data-action="click->sofa-configurator#pickLegs">
+                        <div class="leg-preview leg-metal-gold"></div>
+                        <div class="leg-info">
+                            <div class="leg-name">Metal Dorado</div>
+                            <div class="uph-hint">Latón · Glamur</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {# ── STEP 5 · Resumen + Solicitud ─────────────── #}
+            <div data-sofa-configurator-target="stepPanel" data-step="5" style="display:none">
+
+                <div style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--cyan); margin-top:8px; margin-bottom:4px;">
+                    Tu configuración
+                </div>
+
+                {# Summary grid — 2×2 #}
+                <div class="summary-grid">
+                    <div class="sum-item">
+                        <div class="sum-icon">🛋️</div>
+                        <div class="sum-label">Modelo</div>
+                        <div class="sum-value" data-sofa-configurator-target="summaryModel">—</div>
+                    </div>
+                    <div class="sum-item">
+                        <div class="sum-icon">✨</div>
+                        <div class="sum-label">Tapicería</div>
+                        <div class="sum-value" data-sofa-configurator-target="summaryUpholstery">—</div>
+                    </div>
+                    <div class="sum-item">
+                        <div class="sum-color-swatch" data-sofa-configurator-target="summaryColor" style="margin-bottom:2px;"></div>
+                        <div class="sum-label">Color</div>
+                        <div class="sum-value" id="summary-color-name">—</div>
+                    </div>
+                    <div class="sum-item">
+                        <div class="sum-icon">🪵</div>
+                        <div class="sum-label">Patas</div>
+                        <div class="sum-value" data-sofa-configurator-target="summaryLegs">—</div>
+                    </div>
+                </div>
+
+                {# CTAs — always visible regardless of mueble context #}
+                <div class="step5-ctas">
+                    <button class="btn-presupuesto" id="btn-open-modal" type="button">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
+                        Solicitar presupuesto
+                    </button>
+                    <button class="btn-reconfigurar" type="button"
+                            data-action="click->sofa-configurator#resetWizard">
+                        ↺ Reconfigurar
+                    </button>
+                </div>
+
+            </div>
+
+        </div>{# end .wiz-body #}
+
+        {# ── Navigation ────────────────────────────────────── #}
+        <div class="wiz-nav">
+            <button class="btn-wiz-prev"
+                    data-sofa-configurator-target="prevBtn"
+                    data-action="click->sofa-configurator#prevStep"
+                    style="visibility:hidden">
+                ← Anterior
+            </button>
+            <button class="btn-wiz-next"
+                    data-sofa-configurator-target="nextBtn"
+                    data-action="click->sofa-configurator#nextStep">
+                Siguiente →
+            </button>
+        </div>
+
+    </div>{# end .cfg-wizard #}
+
+</div>{# end .cfg-shell #}
+
+{# ── MODAL — always rendered, muebleId is 0 when no product context #}
+<div class="cfg-modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-el">
+    <div class="cfg-modal" id="modal-box">
+        <button class="modal-close" id="modal-close-btn" aria-label="Cerrar">✕</button>
+
+        {# ── Form view ── #}
+        <div id="modal-form-view">
+            <h2 class="modal-title" id="modal-title-el">Solicitar presupuesto</h2>
+            <p class="modal-sub">Sin compromiso · Respuesta en menos de 48h</p>
+
+            {# Config pills recap #}
+            <div class="modal-config-pills" id="modal-pills"></div>
+
+            <form id="presupuesto-modal-form" novalidate>
+                <input type="hidden" name="muebleId"               value="{{ mueble is defined ? mueble.id : 0 }}">
+                <input type="hidden" name="configuracionModelo"    id="mf-modelo">
+                <input type="hidden" name="configuracionTapiceria" id="mf-tapiceria">
+                <input type="hidden" name="configuracionColor"     id="mf-color">
+                <input type="hidden" name="configuracionPatas"     id="mf-patas">
+
+                <div class="modal-field">
+                    <label for="mf-name">Nombre <span style="color:#ff6b6b">*</span></label>
+                    <input class="modal-input" type="text" id="mf-name" name="customerName"
+                           placeholder="Tu nombre completo" required autocomplete="name">
+                </div>
+                <div class="modal-field">
+                    <label for="mf-email">Email <span style="color:#ff6b6b">*</span></label>
+                    <input class="modal-input" type="email" id="mf-email" name="customerEmail"
+                           placeholder="tu@email.com" required autocomplete="email">
+                </div>
+                <div class="modal-field">
+                    <label for="mf-phone">Teléfono <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— opcional</span></label>
+                    <input class="modal-input" type="tel" id="mf-phone" name="customerPhone"
+                           placeholder="+34 600 000 000" autocomplete="tel">
+                </div>
+                <div class="modal-field">
+                    <label for="mf-notes">Mensaje <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— opcional</span></label>
+                    <textarea class="modal-input" id="mf-notes" name="notes"
+                              placeholder="¿Alguna duda o detalle adicional?"></textarea>
+                </div>
+
+                <button type="submit" class="modal-submit" id="modal-submit-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                    Enviar solicitud
+                </button>
+                <p class="modal-error" id="modal-error"></p>
+                <p style="margin-top:10px; font-size:10px; color:var(--muted); text-align:center; line-height:1.6;">
+                    Datos tratados con total confidencialidad
+                </p>
+            </form>
+        </div>
+
+        {# ── Success view ── #}
+        <div class="modal-success" id="modal-success-view">
+            <div class="success-orbit">
+                <div class="success-planet"></div>
+                <span class="success-rocket">🚀</span>
+            </div>
+            <h3 class="success-title">Tu solicitud ha viajado<br>al universo</h3>
+            <p class="success-sub">Nos pondremos en contacto contigo en menos de 48 horas con una propuesta personalizada.</p>
+            <div class="success-stars">⭐ ✨ 🌟 ✨ ⭐</div>
+            <a class="success-cta" id="pdf-download-btn" href="#" target="_blank"
+               style="margin-top:20px; display:inline-flex; align-items:center; gap:7px;
+                      background:linear-gradient(135deg,rgba(0,245,255,.15),rgba(123,47,255,.15));
+                      border:1px solid rgba(0,245,255,.5); color:var(--cyan);
+                      text-shadow:0 0 10px rgba(0,245,255,.5);">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <polyline points="9 15 12 18 15 15"/>
+                </svg>
+                Descargar PDF del presupuesto
+            </a>
+            <a class="success-cta" id="success-cta-link"
+               href="{{ mueble is defined ? path('app_mueble_show', {id: mueble.id}) : path('app_home') }}"
+               style="background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.12); color:var(--muted);">
+                Volver al catálogo
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    // ── Color name map ────────────────────────────────────────────
+    const COLOR_NAMES = {
+        '#c4a882': 'Camel',      '#ede8df': 'Crema',
+        '#9e8e80': 'Topo',       '#4a4a4a': 'Grafito',
+        '#2d3a6b': 'Azul Noche', '#7a9e7e': 'Salvia',
+        '#3b6e8c': 'Denim',      '#4d5666': 'Pizarra',
+        '#8c2828': 'Burdeos',    '#b56a4a': 'Terracota',
+        '#c4922a': 'Mostaza',    '#3d5c3a': 'Verde Musgo',
+    };
+
+    // ── Drag hint ─────────────────────────────────────────────────
+    document.querySelector('[data-controller="sofa-configurator"] canvas')
+        ?.addEventListener('mousedown', () => document.getElementById('drag-hint')?.remove(), { once: true });
+
+    // ── Viewer label ─────────────────────────────────────────────
+    document.addEventListener('click', e => {
+        const card = e.target.closest('[data-model]');
+        if (!card) return;
+        const labels = {
+            orion: 'Orión', sirio: 'Sirio', vega: 'Vega',
+            andromeda: 'Andrómeda', cassiopea: 'Cassiopea', nebula: 'Nebula',
+            altair: 'Altair', lyra: 'Lyra', perseo: 'Perseo',
+        };
+        const lbl = document.getElementById('viewer-model-label');
+        if (lbl) lbl.textContent = labels[card.dataset.model] ?? card.dataset.model;
+    });
+
+    // ── Step 5 population ─────────────────────────────────────────
+    const cfgRoot = document.querySelector('[data-controller="sofa-configurator"]');
+    function getVal(key) {
+        return cfgRoot?.dataset['sofaConfigurator' + key + 'Value'] ?? '';
+    }
+    function populateStep5() {
+        const color = getVal('Color');
+        // Update color swatch in summary grid
+        const dot = cfgRoot?.querySelector('[data-sofa-configurator-target="summaryColor"]');
+        if (dot) { dot.style.background = color; dot.title = color; }
+        const nameEl = document.getElementById('summary-color-name');
+        if (nameEl) nameEl.textContent = COLOR_NAMES[color.toLowerCase()] ?? color;
+    }
+
+    if (cfgRoot) {
+        const obs = new MutationObserver(() => {
+            const p5 = cfgRoot.querySelector('[data-step="5"]');
+            if (p5 && p5.style.display !== 'none') populateStep5();
+        });
+        obs.observe(cfgRoot, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    }
+
+    // ── Modal logic ───────────────────────────────────────────────
+    const overlay    = document.getElementById('modal-overlay');
+    const closeBtn   = document.getElementById('modal-close-btn');
+    const openBtn    = document.getElementById('btn-open-modal');
+    const form       = document.getElementById('presupuesto-modal-form');
+    const submitBtn  = document.getElementById('modal-submit-btn');
+    const errorEl    = document.getElementById('modal-error');
+    const formView   = document.getElementById('modal-form-view');
+    const successView = document.getElementById('modal-success-view');
+    const pillsEl    = document.getElementById('modal-pills');
+
+    const LABELS = {
+        model: { orion: 'Orión', sirio: 'Sirio', vega: 'Vega', andromeda: 'Andrómeda', cassiopea: 'Cassiopea', nebula: 'Nebula', altair: 'Altair', lyra: 'Lyra', perseo: 'Perseo' },
+        upholstery: { tela: 'Tela', piel: 'Piel', terciopelo: 'Terciopelo' },
+        legs:       { natural: 'M. Natural', dark: 'M. Oscura', 'metal-black': 'Metal Negro', 'metal-gold': 'Metal Dorado' },
+    };
+
+    function openModal() {
+        if (!overlay) return;
+        // Populate hidden inputs
+        const set = (id, key) => { const el = document.getElementById(id); if (el) el.value = getVal(key); };
+        set('mf-modelo',    'Model');
+        set('mf-tapiceria', 'Upholstery');
+        set('mf-color',     'Color');
+        set('mf-patas',     'Legs');
+
+        // Pills
+        if (pillsEl) {
+            const color = getVal('Color');
+            const colorName = COLOR_NAMES[color.toLowerCase()] ?? color;
+            pillsEl.innerHTML = [
+                LABELS.model[getVal('Model')]      ?? getVal('Model'),
+                LABELS.upholstery[getVal('Upholstery')] ?? getVal('Upholstery'),
+                colorName,
+                LABELS.legs[getVal('Legs')]        ?? getVal('Legs'),
+            ].map(t => `<span class="modal-pill">${t}</span>`).join('');
+        }
+
+        // Reset to form view
+        if (formView)    formView.style.display    = '';
+        if (successView) successView.classList.remove('show');
+        if (errorEl)     { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+        if (form)        form.reset();
+
+        overlay.classList.add('open');
+        document.getElementById('mf-name')?.focus();
+    }
+
+    function closeModal() { overlay?.classList.remove('open'); }
+
+    openBtn?.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+    // ── Form submit ───────────────────────────────────────────────
+    form?.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
+        const name  = form.querySelector('[name="customerName"]')?.value.trim();
+        const email = form.querySelector('[name="customerEmail"]')?.value.trim();
+        if (!name || !email) {
+            if (errorEl) { errorEl.textContent = 'Por favor completa nombre y email.'; errorEl.style.display = 'block'; }
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando…';
+
+        try {
+            const res = await fetch('{{ path("app_presupuesto_solicitar") }}', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (formView)    formView.style.display = 'none';
+                if (successView) successView.classList.add('show');
+                const link = document.getElementById('success-cta-link');
+                if (link && data.redirect) link.href = data.redirect;
+                // Wire up PDF download button and auto-trigger download
+                const pdfBtn = document.getElementById('pdf-download-btn');
+                if (pdfBtn && data.pdfUrl) {
+                    pdfBtn.href = data.pdfUrl;
+                    pdfBtn.style.display = '';
+                    setTimeout(() => window.open(data.pdfUrl, '_blank'), 600);
+                } else if (pdfBtn) {
+                    pdfBtn.style.display = 'none';
+                }
+            } else {
+                if (errorEl) { errorEl.textContent = data.error ?? 'Error al enviar. Inténtalo de nuevo.'; errorEl.style.display = 'block'; }
+            }
+        } catch {
+            if (errorEl) { errorEl.textContent = 'Error de red. Inténtalo de nuevo.'; errorEl.style.display = 'block'; }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
+        }
+    });
+})();
+</script>
+{% endblock %}

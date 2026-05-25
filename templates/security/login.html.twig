@@ -1,0 +1,143 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Iniciar sesión · Nuevas Tendencias{% endblock %}
+
+{% block stylesheets %}
+<style>
+.auth-wrap {
+    min-height: calc(100vh - 72px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+.auth-card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: #0e0e2e;
+    border: 1px solid #1e1e4a;
+    border-radius: 20px;
+    padding: 48px 40px;
+    box-shadow: 0 0 60px rgba(123,47,255,.12), 0 0 30px rgba(0,245,255,.06);
+}
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 15%; right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, #00f5ff, #7b2fff);
+    border-radius: 0 0 4px 4px;
+}
+.auth-icon {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #7b2fff, #2a0fa0);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 28px rgba(123,47,255,.5);
+}
+.auth-title { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.auth-sub   { text-align: center; color: #6b6b9a; font-size: 13px; margin-bottom: 32px; }
+.auth-field { margin-bottom: 18px; }
+.auth-field label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: #6b6b9a; margin-bottom: 7px;
+}
+.auth-field input {
+    width: 100%;
+    background: rgba(255,255,255,.04);
+    border: 1px solid #1e1e4a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px; color: #dde1ff;
+    font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+}
+.auth-field input:focus {
+    outline: none;
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.08);
+}
+.auth-field input::placeholder { color: #6b6b9a; }
+.remember-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 24px; font-size: 13px; color: #6b6b9a;
+}
+.remember-row input[type=checkbox] { accent-color: #00f5ff; width: 15px; height: 15px; }
+.alert-error {
+    background: rgba(255,77,109,.1);
+    border: 1px solid rgba(255,77,109,.3);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px; color: #ff4d6d;
+    margin-bottom: 20px;
+}
+.btn-auth {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #00f5ff -20%, #7b2fff 120%);
+    border: none; border-radius: 10px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(123,47,255,.35);
+    transition: box-shadow .2s;
+}
+.btn-auth:hover { box-shadow: 0 4px 30px rgba(0,245,255,.35), 0 4px 20px rgba(123,47,255,.4); }
+.auth-footer {
+    margin-top: 24px; text-align: center;
+    font-size: 13px; color: #6b6b9a;
+}
+.auth-footer a { color: #00f5ff; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-icon">🛸</div>
+    <h1 class="auth-title">Bienvenido</h1>
+    <p class="auth-sub">Inicia sesión en Nuevas Tendencias</p>
+
+    {% for msg in app.flashes('success') %}
+      <div style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:10px;padding:11px 14px;font-size:13px;color:#00f5ff;margin-bottom:18px;">{{ msg }}</div>
+    {% endfor %}
+
+    {% if error %}
+      <div class="alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ path('app_login') }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+      <div class="auth-field">
+        <label for="username">Email</label>
+        <input type="email" id="username" name="_username"
+               value="{{ last_username }}" placeholder="tu@email.com"
+               autocomplete="email" autofocus required>
+      </div>
+
+      <div class="auth-field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="_password"
+               placeholder="••••••••" autocomplete="current-password" required>
+      </div>
+
+      <div class="remember-row">
+        <input type="checkbox" id="remember" name="_remember_me">
+        <label for="remember" style="text-transform:none;letter-spacing:0;font-size:13px;margin:0;">Recordar sesión</label>
+      </div>
+
+      <button type="submit" class="btn-auth">Entrar →</button>
+    </form>
+
+    <div class="auth-footer">
+      ¿No tienes cuenta? <a href="{{ path('app_register') }}">Regístrate</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

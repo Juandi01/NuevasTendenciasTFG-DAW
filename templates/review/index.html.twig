@@ -1,0 +1,248 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Opinión sobre {{ mueble.name }} · Nuevas Tendencias{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .review-shell {
+        min-height: calc(100vh - var(--nav-h));
+        display: flex; align-items: center; justify-content: center;
+        padding: 40px 24px 80px;
+    }
+
+    /* ── Review card ─────────────────────────────────────── */
+    .review-card {
+        width: 100%; max-width: 540px;
+        background: rgba(8,8,30,.9);
+        border: 1px solid rgba(0,245,255,.2);
+        border-radius: 24px; overflow: hidden;
+        backdrop-filter: blur(24px);
+        box-shadow:
+            0 0 0 1px rgba(123,47,255,.1),
+            0 0 60px -10px rgba(123,47,255,.3),
+            0 40px 80px -20px rgba(0,0,0,.7);
+    }
+
+    /* Header */
+    .review-header {
+        padding: 32px 32px 28px;
+        background: linear-gradient(135deg,
+            rgba(123,47,255,.2) 0%,
+            rgba(0,245,255,.06) 60%,
+            transparent 100%);
+        border-bottom: 1px solid rgba(0,245,255,.12);
+        position: relative; overflow: hidden;
+    }
+    .review-header::before {
+        content: '';
+        position: absolute; top: -30%; left: -10%;
+        width: 200%; height: 200%;
+        background: radial-gradient(ellipse at 30% 40%,
+            rgba(123,47,255,.12) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .review-header-brand {
+        font-size: 13px; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, var(--cyan), var(--violet));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; margin-bottom: 10px;
+        position: relative;
+    }
+    .review-header-title {
+        font-size: 22px; font-weight: 700; letter-spacing: -.02em;
+        position: relative; margin-bottom: 6px;
+    }
+    .review-header-sub {
+        font-size: 13px; color: var(--muted); position: relative;
+        line-height: 1.5;
+    }
+    .review-header-sub strong { color: var(--cyan); }
+
+    /* Already used message */
+    .review-used {
+        text-align: center; padding: 40px 32px;
+    }
+    .review-used-icon { font-size: 48px; margin-bottom: 16px; }
+    .review-used-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .review-used-sub { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* Form body */
+    .review-body { padding: 32px; }
+
+    .field { margin-bottom: 24px; }
+    .field-label {
+        display: block; font-size: 12px; font-weight: 600;
+        letter-spacing: .08em; text-transform: uppercase;
+        color: var(--muted); margin-bottom: 10px;
+    }
+
+    /* Star rating */
+    .star-rating {
+        display: flex; gap: 6px; flex-direction: row-reverse; justify-content: flex-end;
+    }
+    .star-rating input { display: none; }
+    .star-rating label {
+        font-size: 30px; cursor: pointer;
+        color: rgba(255,192,77,.2);
+        transition: color .15s, transform .15s;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: var(--gold);
+        text-shadow: 0 0 12px rgba(255,192,77,.6);
+    }
+    .star-rating label:hover { transform: scale(1.2); }
+
+    /* Textarea */
+    .cosmos-textarea {
+        width: 100%; min-height: 130px;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 12px;
+        color: var(--text); font-family: inherit; font-size: 14px;
+        padding: 14px 16px; outline: none; resize: vertical;
+        transition: border-color .2s, box-shadow .2s;
+        line-height: 1.6;
+    }
+    .cosmos-textarea::placeholder { color: var(--muted); }
+    .cosmos-textarea:focus {
+        border-color: rgba(0,245,255,.5);
+        box-shadow: 0 0 0 3px rgba(0,245,255,.08);
+    }
+
+    /* Submit */
+    .btn-transmit {
+        width: 100%; padding: 15px; border-radius: 14px;
+        font-size: 15px; font-weight: 700; font-family: inherit;
+        cursor: pointer; border: none;
+        background: linear-gradient(135deg, var(--violet), var(--cyan));
+        color: #06060f;
+        box-shadow: 0 0 24px rgba(123,47,255,.35), 0 4px 20px rgba(0,245,255,.2);
+        transition: all .22s;
+        display: flex; align-items: center; justify-content: center; gap: 9px;
+    }
+    .btn-transmit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 40px rgba(123,47,255,.5), 0 8px 28px rgba(0,245,255,.35);
+    }
+    .btn-transmit:active { transform: translateY(0); }
+
+    /* Success screen */
+    .review-success { padding: 48px 32px; text-align: center; }
+    .review-success-icon {
+        width: 72px; height: 72px; margin: 0 auto 20px;
+        background: linear-gradient(135deg, rgba(0,255,179,.2), rgba(0,245,255,.15));
+        border: 1px solid rgba(0,255,179,.3);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 32px;
+        box-shadow: 0 0 30px rgba(0,255,179,.25);
+    }
+    .review-success-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .review-success-sub { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 340px; margin: 0 auto 24px; }
+    .btn-back-catalog {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 11px 22px; border-radius: 24px; font-size: 14px; font-weight: 600;
+        background: rgba(0,245,255,.08); border: 1px solid rgba(0,245,255,.3);
+        color: var(--cyan); text-decoration: none; transition: all .18s;
+    }
+    .btn-back-catalog:hover { background: rgba(0,245,255,.16); }
+
+    /* Token info pill */
+    .token-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+        padding: 4px 10px; border-radius: 20px;
+        background: rgba(0,245,255,.08); border: 1px solid rgba(0,245,255,.2);
+        color: var(--cyan); margin-bottom: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="review-shell">
+    <div class="review-card">
+
+        <div class="review-header">
+            <div class="review-header-brand">✦ Nuevas Tendencias · Transmisión de Opinión</div>
+            <h1 class="review-header-title">Cuéntanos tu experiencia</h1>
+            <p class="review-header-sub">
+                Hola, explorador. ¿Qué tal tu nuevo
+                <strong>{{ mueble.name }}</strong>?
+                La IA analizará tu comentario.
+            </p>
+        </div>
+
+        {% if token.isUsed %}
+        <div class="review-used">
+            <div class="review-used-icon">🔒</div>
+            <h2 class="review-used-title">Enlace ya utilizado</h2>
+            <p class="review-used-sub">
+                Este enlace mágico fue activado anteriormente.<br>
+                Solo puede usarse una vez. ¡Gracias por tu reseña!
+            </p>
+        </div>
+
+        {% elseif token.expiresAt < date() %}
+        <div class="review-used">
+            <div class="review-used-icon">⏳</div>
+            <h2 class="review-used-title">Enlace caducado</h2>
+            <p class="review-used-sub">
+                Este enlace expiró el {{ token.expiresAt|date('d/m/Y') }}.<br>
+                Contacta con nosotros para obtener uno nuevo.
+            </p>
+        </div>
+
+        {% else %}
+        <form method="POST" class="review-body">
+
+            <div class="field">
+                <label class="field-label">Tu valoración</label>
+                <div class="star-rating">
+                    {% for v in [5,4,3,2,1] %}
+                    <input type="radio" name="rating" id="star{{ v }}" value="{{ v }}" {{ v == 5 ? 'checked' : '' }}>
+                    <label for="star{{ v }}" title="{{ v }} estrella{{ v != 1 ? 's' : '' }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="comment">
+                    Tu comentario
+                    <span style="color:rgba(107,107,154,.6); font-weight:400; text-transform:none; letter-spacing:0;"> — la IA te lee 👾</span>
+                </label>
+                <textarea
+                    id="comment" name="comment" required
+                    class="cosmos-textarea"
+                    placeholder="El sofá llegó bien embalado, los colores son exactos a la foto…"
+                ></textarea>
+            </div>
+
+            <button type="submit" class="btn-transmit">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+                Enviar transmisión
+            </button>
+        </form>
+        {% endif %}
+
+        {% for msg in app.flashes('review_sent') %}
+        <div class="review-success">
+            <div class="review-success-icon">✅</div>
+            <h2 class="review-success-title">¡Transmisión recibida!</h2>
+            <p class="review-success-sub">{{ msg }}</p>
+            <a href="{{ path('app_home') }}" class="btn-back-catalog">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Explorar el catálogo
+            </a>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

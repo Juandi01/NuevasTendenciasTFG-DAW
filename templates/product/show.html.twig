@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} — Nuevas Tendencias{% endblock %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    <a href="{{ path('app_product_index') }}"
+       class="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-800 mb-8 transition-colors">
+        &larr; Volver al catálogo
+    </a>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-gray-100">
+
+        {# Imagen principal #}
+        <div class="rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center">
+            {% set mainImage = product.mainImage %}
+            <img
+                src="{{ mainImage ? mainImage.url : 'https://placehold.co/600x400?text=Sin+Foto' }}"
+                alt="{{ mainImage ? mainImage.altText ?? product.name : product.name }}"
+                class="w-full object-cover hover:scale-105 transition-transform duration-700"
+            >
+        </div>
+
+        {# Datos del producto #}
+        <div class="flex flex-col justify-center">
+            <span class="text-sm font-bold tracking-widest text-indigo-600 uppercase">
+                {{ product.category.name }}
+            </span>
+            <h1 class="text-4xl font-extrabold text-gray-900 mt-2 mb-2">{{ product.name }}</h1>
+
+            {% if product.price %}
+                <p class="text-3xl font-black text-indigo-600 mb-6">
+                    {{ product.price|number_format(2, ',', '.') }} €
+                </p>
+            {% endif %}
+
+            <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                {{ product.description ?? 'Sin descripción disponible.' }}
+            </p>
+
+            {# Dimensiones #}
+            {% if product.width or product.height or product.depth %}
+                <div class="bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Dimensiones</h3>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        {% if product.width %}
+                            <div>
+                                <p class="text-2xl font-black text-gray-900">{{ product.width }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">Ancho cm</p>
+                            </div>
+                        {% endif %}
+                        {% if product.height %}
+                            <div>
+                                <p class="text-2xl font-black text-gray-900">{{ product.height }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">Alto cm</p>
+                            </div>
+                        {% endif %}
+                        {% if product.depth %}
+                            <div>
+                                <p class="text-2xl font-black text-gray-900">{{ product.depth }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">Fondo cm</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <button class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-indigo-600 transition-colors shadow-lg">
+                Añadir al carrito
+            </button>
+        </div>
+    </div>
+
+    {# Galería de imágenes adicionales #}
+    {% if product.images|length > 1 %}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Galería</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {% for image in product.images %}
+                    <div class="rounded-xl overflow-hidden bg-gray-100 aspect-square">
+                        <img
+                            src="{{ image.url }}"
+                            alt="{{ image.altText ?? product.name }}"
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        >
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

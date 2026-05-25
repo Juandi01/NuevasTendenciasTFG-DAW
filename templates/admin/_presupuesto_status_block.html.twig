@@ -1,0 +1,33 @@
+{# Current badge #}
+<div style="margin-bottom:16px;">
+    <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Estado actual</div>
+    <span class="badge {{ presupuesto.estado.badgeClass }}" style="font-size:13px; padding:5px 14px;">
+        {{ presupuesto.estado.icon }} {{ presupuesto.estado.label }}
+    </span>
+</div>
+
+{# Transition actions #}
+{% set next = presupuesto.estado.nextStates %}
+{% if next|length > 0 %}
+<div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Cambiar a</div>
+<div class="status-actions">
+    {% for estado in next %}
+    <form method="POST"
+          action="{{ path('app_admin_presupuesto_estado', {id: presupuesto.id}) }}"
+          data-turbo-stream>
+        <input type="hidden" name="_token" value="{{ csrf_token('estado-' ~ presupuesto.id) }}">
+        <input type="hidden" name="status"  value="{{ estado.value }}">
+        <button type="submit" class="btn-state btn-state-{{ estado.value }}" style="width:100%;">
+            {{ estado.icon }} {{ estado.label }}
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto; opacity:.6">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </form>
+    {% endfor %}
+</div>
+{% else %}
+<div style="font-size:12px; color:var(--muted); font-style:italic; padding:10px 0;">
+    Estado final — no hay más transiciones.
+</div>
+{% endif %}

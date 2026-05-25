@@ -1,0 +1,334 @@
+{% extends 'admin/space_base.html.twig' %}
+
+{% block title %}Productos{% endblock %}
+{% block breadcrumb %}Productos{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Search bar ──────────────────────────────────────────── */
+.search-input {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 14px 9px 38px;
+    width: 260px;
+    transition: border-color .18s, box-shadow .18s;
+    outline: none;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus {
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.1);
+}
+.search-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.search-wrap svg {
+    position: absolute;
+    left: 11px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+/* ── Filter selects ──────────────────────────────────────── */
+.filter-select {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 32px 9px 12px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b9a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color .18s, box-shadow .18s;
+}
+.filter-select:focus {
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.1);
+}
+.filter-select option { background: #10103a; color: var(--text); }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge-green  { background: rgba(0,255,179,.1);   color: var(--success); border: 1px solid rgba(0,255,179,.25);  }
+.badge-red    { background: rgba(255,77,109,.1);  color: var(--danger);  border: 1px solid rgba(255,77,109,.25); }
+
+/* ── Action buttons in table ─────────────────────────────── */
+.btn-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s;
+    font-family: inherit;
+    font-size: 12px;
+}
+.btn-icon:hover          { background: rgba(0,245,255,.1); border-color: rgba(0,245,255,.3); color: var(--cyan); }
+.btn-icon.btn-danger:hover{ background: rgba(255,77,109,.1); border-color: rgba(255,77,109,.3); color: var(--danger); }
+
+/* ── Pagination ──────────────────────────────────────────── */
+.pagination {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 20px; justify-content: center;
+}
+.page-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 32px; height: 32px; padding: 0 8px;
+    border-radius: 6px; font-size: 13px; font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: rgba(255,255,255,.02);
+    transition: all .15s;
+}
+.page-btn:hover       { background: rgba(0,245,255,.08); border-color: rgba(0,245,255,.25); color: var(--cyan); }
+.page-btn.active      { background: rgba(0,245,255,.14); border-color: rgba(0,245,255,.4);  color: var(--cyan); font-weight: 700; }
+.page-btn:disabled,
+.page-btn.disabled    { opacity: .35; pointer-events: none; }
+
+/* ── Flash toasts ────────────────────────────────────────── */
+#flash-zone { position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.flash-toast {
+    display: flex; align-items: center; gap: 9px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.flash-success {
+    background: rgba(0,255,179,.1);
+    border: 1px solid rgba(0,255,179,.3);
+    color: var(--success);
+}
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0);    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Flash zone for Turbo Streams ────────────────────────── #}
+<div id="flash-zone">
+    {% for msg in app.flashes('success') %}
+    <div class="flash-toast flash-success">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Header ───────────────────────────────────────────────── #}
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <div>
+        <div class="page-title">Productos</div>
+        <div class="page-subtitle">
+            {{ pager.total }} producto{{ pager.total != 1 ? 's' : '' }} en total
+        </div>
+    </div>
+    <a href="{{ path('app_admin_producto_new') }}" class="btn btn-violet">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nuevo producto
+    </a>
+</div>
+
+{# ── Search + filters form ────────────────────────────────── #}
+{# Turbo Frame wraps the whole results area #}
+<form method="get" action="{{ path('app_admin_productos') }}"
+      data-turbo-frame="productos-list" id="filter-form">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+
+        <div class="search-wrap">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="search" name="q" value="{{ filters.q }}"
+                   placeholder="Buscar producto…"
+                   class="search-input"
+                   oninput="this.form.requestSubmit()">
+        </div>
+
+        <select name="category" class="filter-select" onchange="this.form.requestSubmit()">
+            <option value="">Todas las categorías</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {{ filters.category == cat.id ? 'selected' : '' }}>
+                    {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="active" class="filter-select" onchange="this.form.requestSubmit()">
+            <option value="">Todos los estados</option>
+            <option value="1" {{ filters.active == '1' ? 'selected' : '' }}>Activos</option>
+            <option value="0" {{ filters.active == '0' ? 'selected' : '' }}>Inactivos</option>
+        </select>
+
+        {% if filters.q or filters.category or filters.active != '' %}
+            <a href="{{ path('app_admin_productos') }}"
+               class="btn btn-cyan" style="padding:7px 14px; font-size:12px;"
+               data-turbo-frame="productos-list">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+                Limpiar
+            </a>
+        {% endif %}
+
+        <span style="margin-left:auto; font-size:12px; color:var(--muted);">
+            Pág. {{ pager.page }} / {{ pager.pages }}
+        </span>
+    </div>
+</form>
+
+{# ── Turbo Frame: tabla paginada ──────────────────────────── #}
+<turbo-frame id="productos-list">
+
+{% if pager.items is empty %}
+    <div class="card" style="text-align:center; padding:64px 40px; color:var(--muted);">
+        <div style="font-size:40px; margin-bottom:14px;">🔭</div>
+        <div style="font-size:15px; font-weight:600; margin-bottom:8px;">Sin resultados</div>
+        <div style="font-size:13px;">Prueba con otros filtros o
+            <a href="{{ path('app_admin_producto_new') }}" style="color:var(--cyan);">crea un producto</a>.
+        </div>
+    </div>
+{% else %}
+    <div class="card" style="padding:0; overflow:hidden;">
+        <table class="space-table">
+            <thead>
+                <tr>
+                    <th style="width:50px; padding-left:20px;">#</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Dimensiones</th>
+                    <th>Reseñas</th>
+                    <th>Estado</th>
+                    <th style="width:100px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mueble in pager.items %}
+                <tr id="mueble-{{ mueble.id }}">
+                    <td style="padding-left:20px; color:var(--muted); font-family:monospace; font-size:11px;">
+                        #{{ mueble.id }}
+                    </td>
+                    <td>
+                        <div style="font-weight:600; font-size:13px;">{{ mueble.name }}</div>
+                        {% if mueble.descriptionAi %}
+                        <div style="font-size:11px; color:var(--muted); margin-top:2px; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            {{ mueble.descriptionAi|slice(0,60) }}{% if mueble.descriptionAi|length > 60 %}…{% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-violet">{{ mueble.category.name }}</span>
+                    </td>
+                    <td style="font-size:13px; font-weight:600; color:var(--cyan);">
+                        {% if mueble.price %}
+                            {{ mueble.price|number_format(2, ',', '.') }} €
+                        {% else %}
+                            <span style="color:var(--muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px; color:var(--muted);">
+                        {% if mueble.width or mueble.height or mueble.depth %}
+                            {{ mueble.width ?? '?' }}×{{ mueble.height ?? '?' }}×{{ mueble.depth ?? '?' }} cm
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-muted">{{ mueble.reviews|length }}</span>
+                    </td>
+                    <td>
+                        {% if mueble.isActive %}
+                            <span class="badge badge-green">Activo</span>
+                        {% else %}
+                            <span class="badge badge-red">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <a href="{{ path('app_mueble_show', {id: mueble.id}) }}" target="_blank"
+                               class="btn-icon" title="Ver en tienda">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+                                </svg>
+                            </a>
+                            <a href="{{ path('app_admin_producto_edit', {id: mueble.id}) }}"
+                               class="btn-icon" title="Editar"
+                               data-turbo-frame="_top">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </a>
+                            <form method="post"
+                                  action="{{ path('app_admin_producto_delete', {id: mueble.id}) }}"
+                                  onsubmit="return confirm('¿Eliminar «{{ mueble.name|e('js') }}»? Esta acción no se puede deshacer.')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('del-' ~ mueble.id) }}">
+                                <button type="submit" class="btn-icon btn-danger" title="Eliminar">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Pagination ────────────────────────────────────── #}
+    {% if pager.pages > 1 %}
+    <nav class="pagination">
+        {% set qBase = filters|filter(v => v != '')|merge({page: 1}) %}
+
+        <a href="{{ path('app_admin_productos', filters|merge({page: pager.page - 1})) }}"
+           class="page-btn {{ pager.page <= 1 ? 'disabled' : '' }}"
+           data-turbo-frame="productos-list">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+
+        {% for p in 1..pager.pages %}
+            {% if p == 1 or p == pager.pages or (p >= pager.page - 2 and p <= pager.page + 2) %}
+                <a href="{{ path('app_admin_productos', filters|merge({page: p})) }}"
+                   class="page-btn {{ p == pager.page ? 'active' : '' }}"
+                   data-turbo-frame="productos-list">{{ p }}</a>
+            {% elseif p == pager.page - 3 or p == pager.page + 3 %}
+                <span class="page-btn disabled">…</span>
+            {% endif %}
+        {% endfor %}
+
+        <a href="{{ path('app_admin_productos', filters|merge({page: pager.page + 1})) }}"
+           class="page-btn {{ pager.page >= pager.pages ? 'disabled' : '' }}"
+           data-turbo-frame="productos-list">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+    </nav>
+    {% endif %}
+
+{% endif %}
+
+</turbo-frame>
+
+{% endblock %}

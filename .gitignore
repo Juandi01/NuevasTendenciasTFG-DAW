@@ -1,0 +1,6 @@
+vendor/
+node_modules/
+.claude/
+CLAUDE.md
+var/
+.git/

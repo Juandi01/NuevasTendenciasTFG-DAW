@@ -1,0 +1,31 @@
+/* Colores corporativos elegantes */
+
+:root {
+    --primary-600: #8d6e63;
+    /* Color café/madera suave */
+    --body-bg: #1a1a1a;
+    /* Negro mate profundo */
+}
+
+
+/* Redondear botones y tarjetas para un look más moderno/Apple style */
+
+.card,
+.btn,
+.form-control {
+    border-radius: 8px !important;
+}
+
+
+/* Hacer el menú lateral más minimalista */
+
+.main-sidebar {
+    border-right: 1px solid #333;
+}
+
+
+/* Cambiar la fuente a una más legible y elegante */
+
+body {
+    font-family: 'Inter', sans-serif;
+}

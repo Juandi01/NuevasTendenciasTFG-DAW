@@ -1,0 +1,987 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ mueble.name }} · Nuevas Tendencias{% endblock %}
+
+{# ── Pre-compute gallery + option groups ──────────────────────────── #}
+{% set gallery     = [] %}
+{% set tapicerias  = [] %}
+{% set patas       = [] %}
+{% set seenOptions = [] %}
+
+{% for variation in mueble.variations %}
+  {% for option in variation.options %}
+    {% if option.id not in seenOptions %}
+      {% set seenOptions = seenOptions|merge([option.id]) %}
+      {% if option.type == 'color' and not option.images.isEmpty %}
+        {% set gallery = gallery|merge([{
+          name: option.name,
+          hex:  option.value,
+          url:  option.images.first.url,
+          varId: variation.id
+        }]) %}
+      {% endif %}
+      {% if option.type == 'tapiceria' %}
+        {% set tapicerias = tapicerias|merge([option.name]) %}
+      {% endif %}
+      {% if option.type == 'pata' %}
+        {% set patas = patas|merge([option.name]) %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% set firstImage = gallery|length > 0 ? gallery[0].url : mueble.imagenPortada %}
+{% set firstColor = gallery|length > 0 ? gallery[0].hex : '#888888' %}
+{% set firstTap   = tapicerias|length > 0 ? tapicerias[0] : null %}
+{% set firstPata  = patas|length > 0 ? patas[0] : null %}
+
+{% block stylesheets %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────── */
+.show-wrap {
+    padding: 0 max(24px, calc((100vw - 1320px) / 2)) 100px;
+}
+
+/* ── Back link ───────────────────────────────────────────────── */
+.back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 36px 0 32px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    text-decoration: none; transition: color .18s;
+}
+.back-link:hover { color: var(--cyan); }
+.back-link:hover svg { transform: translateX(-3px); }
+.back-link svg { transition: transform .18s; }
+
+/* ── Magic link flash ────────────────────────────────────────── */
+.magic-flash {
+    background: rgba(0,245,255,.04);
+    border: 1px solid rgba(0,245,255,.22);
+    border-radius: 16px; padding: 22px 26px;
+    margin-bottom: 32px;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.magic-flash-header { display: flex; align-items: center; gap: 10px; }
+.magic-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px;
+    background: rgba(0,245,255,.12); color: var(--cyan);
+    border: 1px solid rgba(0,245,255,.3);
+}
+.magic-url {
+    font-family: monospace; font-size: 12px;
+    background: rgba(0,0,0,.4); border: 1px solid rgba(0,245,255,.2);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--cyan); word-break: break-all; line-height: 1.5; display: block;
+}
+.magic-cta {
+    font-size: 13px; font-weight: 600; color: var(--cyan);
+    text-decoration: none; align-self: flex-start;
+    padding: 7px 16px; border-radius: 8px;
+    background: rgba(0,245,255,.1); border: 1px solid rgba(0,245,255,.25);
+    transition: all .18s;
+}
+.magic-cta:hover { background: rgba(0,245,255,.18); }
+
+/* ── Main product grid ───────────────────────────────────────── */
+.product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .product-grid { grid-template-columns: 1fr; gap: 36px; }
+}
+
+/* ── Gallery panel ───────────────────────────────────────────── */
+.gallery-panel {
+    position: sticky;
+    top: calc(var(--nav-h, 72px) + 24px);
+}
+
+/* Orbital rings */
+.gallery-orbit {
+    position: relative;
+    padding: 48px;
+    margin: -48px;
+}
+.orbit-ring {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%; border: 1px solid;
+    pointer-events: none;
+    transform-origin: center center;
+}
+.orbit-a {
+    width: calc(100% - 8px); height: calc(100% - 8px);
+    margin: calc(-50% + 4px) 0 0 calc(-50% + 4px);
+    border-color: rgba(0,245,255,.1);
+    animation: orbitSpin 28s linear infinite;
+}
+.orbit-a::after {
+    content: '';
+    position: absolute; top: -5px; left: 50%; margin-left: -5px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 12px var(--cyan), 0 0 28px rgba(0,245,255,.4);
+}
+.orbit-b {
+    width: calc(100% + 44px); height: calc(100% + 44px);
+    margin: calc(-50% - 22px) 0 0 calc(-50% - 22px);
+    border-color: rgba(123,47,255,.07);
+    border-style: dashed;
+    animation: orbitSpin 48s linear infinite reverse;
+}
+.orbit-b::before {
+    content: '';
+    position: absolute; bottom: -4px; right: 18%;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--violet);
+    box-shadow: 0 0 10px var(--violet), 0 0 22px rgba(123,47,255,.4);
+}
+@keyframes orbitSpin { to { transform: rotate(360deg); } }
+
+/* Main image */
+.gallery-main {
+    border-radius: 22px; overflow: hidden;
+    background: rgba(0,0,0,.4);
+    border: 1px solid rgba(0,245,255,.14);
+    aspect-ratio: 4/3;
+    position: relative;
+    box-shadow:
+        0 0 0 1px rgba(123,47,255,.09),
+        0 0 40px rgba(0,245,255,.1),
+        0 24px 60px rgba(0,0,0,.5);
+    cursor: zoom-in;
+}
+.gallery-main img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .8s cubic-bezier(.2,.8,.4,1), opacity .35s;
+}
+.gallery-main:hover img { transform: scale(1.04); }
+.gallery-main-glow {
+    position: absolute; inset: 0; border-radius: 22px;
+    background: linear-gradient(135deg,
+        rgba(0,245,255,.06) 0%, transparent 45%,
+        rgba(123,47,255,.06) 100%);
+    pointer-events: none;
+}
+/* Dark placeholder inside gallery */
+.gallery-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(10,10,40,.8), rgba(6,6,26,.9));
+}
+.gallery-placeholder-icon { font-size: 56px; opacity: .35; }
+.gallery-placeholder-name {
+    font-size: 15px; font-weight: 600; color: rgba(232,234,255,.3);
+    letter-spacing: .05em;
+}
+
+/* Thumbnails strip */
+.gallery-thumbs {
+    display: flex; gap: 10px; margin-top: 16px;
+    flex-wrap: wrap;
+}
+.gallery-thumb {
+    width: 60px; height: 60px;
+    border-radius: 12px; overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer; transition: all .22s;
+    background: rgba(0,0,0,.4);
+    flex-shrink: 0;
+    position: relative;
+}
+.gallery-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .3s;
+}
+.gallery-thumb:hover { border-color: rgba(0,245,255,.5); transform: translateY(-2px); }
+.gallery-thumb:hover img { transform: scale(1.08); }
+.gallery-thumb.active {
+    border-color: var(--cyan);
+    box-shadow: 0 0 14px rgba(0,245,255,.4);
+}
+.gallery-thumb.active::after {
+    content: '✓';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800;
+    color: rgba(255,255,255,.9);
+    background: rgba(0,0,0,.35);
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
+}
+/* Placeholder thumb */
+.thumb-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; opacity: .5;
+}
+
+/* ── Info panel ──────────────────────────────────────────────── */
+.product-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: #c9a0ff;
+    margin-bottom: 14px;
+}
+.product-eyebrow::before { content: '✦'; font-size: 9px; color: var(--violet); }
+
+.product-name {
+    font-size: clamp(30px, 4.5vw, 52px);
+    font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #e8eaff 40%, rgba(0,245,255,.85));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.product-celestial {
+    font-size: 13px; color: var(--muted); margin-bottom: 20px;
+    letter-spacing: .04em; font-style: italic;
+}
+
+/* Price */
+.product-price-block {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: rgba(0,255,179,.04);
+    border: 1px solid rgba(0,255,179,.15);
+    border-radius: 14px;
+}
+.price-from {
+    font-size: 11px; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+}
+.price-amount {
+    font-size: 36px; font-weight: 800;
+    color: var(--success, #00ffb3);
+    text-shadow: 0 0 24px rgba(0,255,179,.35);
+    line-height: 1;
+}
+.price-currency {
+    font-size: 18px; font-weight: 500; color: rgba(0,255,179,.6);
+}
+.price-note {
+    font-size: 11px; color: var(--muted); margin-left: auto; line-height: 1.4;
+}
+
+/* Description */
+.product-desc {
+    font-size: 15px; color: rgba(232,234,255,.62);
+    line-height: 1.8; margin-bottom: 28px;
+}
+
+/* Option group */
+.opt-group { margin-bottom: 24px; }
+.opt-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 12px; display: block;
+}
+
+/* Color swatches */
+.color-swatches { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.color-swatch-btn {
+    position: relative;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer; transition: all .22s;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 2px 8px rgba(0,0,0,.4);
+}
+.color-swatch-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,.4); }
+.color-swatch-btn.active {
+    border-color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.3),
+        0 0 0 3px rgba(255,255,255,.15),
+        0 0 18px rgba(0,245,255,.4);
+    transform: scale(1.12);
+}
+.color-swatch-btn.active::after {
+    content: '✓';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.9); font-size: 14px; font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,.7);
+}
+.color-swatch-name {
+    font-size: 11px; color: var(--muted); margin-top: 4px; text-align: center;
+    white-space: nowrap;
+}
+.color-swatch-wrap { display: flex; flex-direction: column; align-items: center; }
+
+/* Material pills */
+.mat-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.mat-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 13px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted);
+}
+.mat-pill-icon { font-size: 14px; }
+
+/* Dimensions */
+.dim-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.dim-chip {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 16px; border-radius: 12px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+    min-width: 72px;
+}
+.dim-chip-val { font-size: 16px; font-weight: 700; color: var(--text); }
+.dim-chip-key { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+/* ── CTA group ───────────────────────────────────────────────── */
+.cta-group { display: flex; flex-direction: column; gap: 10px; margin-top: 32px; }
+
+.btn-configurar {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px 24px; border-radius: 14px;
+    font-size: 15px; font-weight: 700; font-family: inherit;
+    cursor: pointer; text-decoration: none; width: 100%; border: none;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: #060610;
+    box-shadow: 0 0 28px rgba(0,245,255,.3), 0 4px 22px rgba(123,47,255,.2);
+    transition: all .22s;
+}
+.btn-configurar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 44px rgba(0,245,255,.5), 0 8px 30px rgba(123,47,255,.4);
+}
+
+.btn-presupuesto-show {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 14px 24px; border-radius: 14px;
+    font-size: 14px; font-weight: 600; font-family: inherit;
+    cursor: pointer; width: 100%;
+    background: rgba(0,245,255,.06);
+    border: 1px solid rgba(0,245,255,.3);
+    color: var(--cyan);
+    transition: all .2s;
+}
+.btn-presupuesto-show:hover {
+    background: rgba(0,245,255,.12);
+    box-shadow: 0 0 24px rgba(0,245,255,.2);
+    transform: translateY(-1px);
+}
+
+.btn-simulate-show {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 20px; border-radius: 12px;
+    font-size: 12px; font-weight: 500; font-family: inherit;
+    cursor: pointer; width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.08);
+    color: var(--muted); opacity: .7;
+    transition: all .18s;
+}
+.btn-simulate-show:hover { opacity: 1; border-color: rgba(255,255,255,.18); color: var(--text); }
+
+/* ── Reviews section ─────────────────────────────────────────── */
+.reviews-section {
+    margin-top: 88px; padding-top: 64px;
+    border-top: 1px solid rgba(255,255,255,.06);
+}
+.reviews-eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--violet); margin-bottom: 10px;
+}
+.reviews-title { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 32px; }
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+}
+.review-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 16px; padding: 22px;
+    transition: border-color .2s;
+}
+.review-card:hover { border-color: rgba(123,47,255,.3); }
+.review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.review-stars { font-size: 14px; letter-spacing: 2px; color: var(--gold, #ffc04d); }
+.review-stars .dim { color: rgba(255,192,77,.2); }
+.sentiment-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 20px;
+}
+.sentiment-Positivo { background: rgba(0,255,179,.1); color: var(--success); border: 1px solid rgba(0,255,179,.25); }
+.sentiment-Negativo { background: rgba(255,77,109,.1); color: var(--danger, #ff4d6d); border: 1px solid rgba(255,77,109,.25); }
+.sentiment-Neutro   { background: rgba(107,107,154,.1); color: var(--muted); border: 1px solid rgba(107,107,154,.2); }
+.review-text {
+    font-size: 14px; color: rgba(232,234,255,.6); line-height: 1.75; font-style: italic;
+}
+.review-text::before { content: '❝ '; color: var(--violet); }
+.review-text::after  { content: ' ❞'; color: var(--violet); }
+.no-reviews {
+    grid-column: 1/-1; text-align: center; padding: 52px 24px;
+    color: var(--muted); font-size: 15px;
+}
+
+/* ── Presupuesto modal ───────────────────────────────────────── */
+.pres-overlay {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(3,3,20,.8); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.pres-overlay.open { opacity: 1; pointer-events: auto; }
+.pres-modal {
+    background: linear-gradient(145deg, #07071e, #0b0b2a);
+    border: 1px solid rgba(0,245,255,.2);
+    border-radius: 22px; padding: 32px;
+    width: 100%; max-width: 460px;
+    max-height: 90dvh; overflow-y: auto;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,245,255,.1), 0 24px 64px rgba(0,0,0,.6);
+    transform: translateY(16px) scale(.97);
+    transition: transform .28s cubic-bezier(.34,1.56,.64,1);
+    scrollbar-width: thin; scrollbar-color: rgba(0,245,255,.2) transparent;
+}
+.pres-overlay.open .pres-modal { transform: translateY(0) scale(1); }
+.pres-close {
+    position: absolute; top: 14px; right: 14px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .18s; font-family: inherit;
+}
+.pres-close:hover { background: rgba(255,255,255,.12); color: var(--text); }
+.pres-title {
+    font-size: 18px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px; padding-right: 40px;
+}
+.pres-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.pres-config-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 12px; margin-bottom: 18px;
+    background: rgba(0,245,255,.04); border: 1px solid rgba(0,245,255,.1);
+    border-radius: 10px;
+}
+.pres-pill {
+    font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px;
+    background: rgba(0,245,255,.1); border: 1px solid rgba(0,245,255,.2);
+    color: var(--cyan); letter-spacing: .04em;
+}
+.modal-field { margin-bottom: 12px; }
+.modal-field label {
+    display: block; font-size: 10px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+}
+.modal-input {
+    width: 100%; background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 9px;
+    color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 10px 13px; outline: none;
+    transition: border-color .2s, box-shadow .2s; box-sizing: border-box;
+}
+.modal-input:focus { border-color: rgba(0,245,255,.5); box-shadow: 0 0 0 2px rgba(0,245,255,.08); }
+textarea.modal-input { resize: vertical; min-height: 72px; }
+.modal-submit {
+    width: 100%; padding: 13px; border-radius: 11px;
+    border: 1px solid rgba(0,245,255,.5);
+    background: linear-gradient(135deg, rgba(0,245,255,.18), rgba(123,47,255,.18));
+    color: var(--cyan); font-family: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 0 24px rgba(0,245,255,.2); transition: all .22s;
+    text-shadow: 0 0 10px rgba(0,245,255,.5); letter-spacing: .04em; margin-top: 4px;
+}
+.modal-submit:hover { box-shadow: 0 0 40px rgba(0,245,255,.4); transform: translateY(-1px); }
+.modal-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.modal-error { color: #ff6b6b; font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+.modal-success-view {
+    display: none; flex-direction: column; align-items: center;
+    text-align: center; padding: 20px 0;
+}
+.modal-success-view.show { display: flex; }
+.success-orbit { position: relative; width: 90px; height: 90px; margin-bottom: 22px; }
+.success-planet {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #00f5ff, #7b2fff);
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    box-shadow: 0 0 28px rgba(0,245,255,.5); animation: sPlsPulse 2s ease-in-out infinite;
+}
+.success-rocket {
+    font-size: 26px; position: absolute;
+    animation: sPlsOrbit 3s linear infinite; transform-origin: 45px 45px;
+}
+@keyframes sPlsPulse { 0%,100%{box-shadow:0 0 28px rgba(0,245,255,.5)} 50%{box-shadow:0 0 46px rgba(0,245,255,.8)} }
+@keyframes sPlsOrbit { from{transform:rotate(0deg) translateX(38px) rotate(0deg)} to{transform:rotate(360deg) translateX(38px) rotate(-360deg)} }
+.success-title {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 10px; line-height: 1.3;
+}
+.success-sub { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 280px; }
+.success-cta {
+    margin-top: 20px; padding: 9px 22px; border-radius: 10px;
+    background: rgba(0,245,255,.08); border: 1px solid rgba(0,245,255,.25);
+    color: var(--cyan); font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .18s; text-decoration: none; display: inline-block;
+}
+.success-cta:hover { background: rgba(0,245,255,.16); }
+
+@media (max-width: 600px) {
+    .gallery-thumbs { gap: 8px; }
+    .gallery-thumb { width: 50px; height: 50px; }
+    .color-swatches { gap: 8px; }
+    .product-name { font-size: 28px; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="show-wrap">
+
+  <a href="{{ path('app_home') }}" class="back-link">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Volver a la galaxia
+  </a>
+
+  {# ── Magic link flash ─────────────────────────────────────── #}
+  {% for token in app.flashes('magic_link') %}
+  <div class="magic-flash" role="alert">
+    <div class="magic-flash-header">
+      <span class="magic-badge">✦ Enlace Generado</span>
+      <span style="font-size:13px;color:var(--muted);">En producción llega por email:</span>
+    </div>
+    <a href="{{ url('app_review_form', {token: token}) }}" class="magic-url">
+      {{ url('app_review_form', {token: token}) }}
+    </a>
+    <a href="{{ path('app_review_form', {token: token}) }}" class="magic-cta">
+      Probar enlace mágico →
+    </a>
+  </div>
+  {% endfor %}
+
+  {# ── Product grid ──────────────────────────────────────────── #}
+  <div class="product-grid">
+
+    {# ── LEFT · Gallery ──────────────────────────────────────── #}
+    <div class="gallery-panel">
+      <div class="gallery-orbit">
+        <div class="orbit-ring orbit-a" aria-hidden="true"></div>
+        <div class="orbit-ring orbit-b" aria-hidden="true"></div>
+
+        <div class="gallery-main" id="gallery-main">
+          {% if 'placehold.co' in firstImage %}
+            <div class="gallery-placeholder">
+              <div class="gallery-placeholder-icon">🛋️</div>
+              <div class="gallery-placeholder-name">{{ mueble.name }}</div>
+            </div>
+          {% else %}
+            <img id="gallery-main-img" src="{{ firstImage }}" alt="{{ mueble.name }}" loading="eager">
+          {% endif %}
+          <div class="gallery-main-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      {# Thumbnails #}
+      {% if gallery|length > 1 %}
+      <div class="gallery-thumbs" id="gallery-thumbs" style="margin-top: 68px;">
+        {% for item in gallery %}
+        <div class="gallery-thumb {{ loop.first ? 'active' : '' }}"
+             data-url="{{ item.url }}"
+             data-name="{{ item.name }}"
+             data-hex="{{ item.hex }}"
+             data-index="{{ loop.index0 }}"
+             title="{{ item.name }}"
+             role="button" tabindex="0">
+          {% if 'placehold.co' in item.url %}
+            <div class="thumb-placeholder" style="background:{{ item.hex }};">🛋️</div>
+          {% else %}
+            <img src="{{ item.url }}" alt="{{ item.name }}" loading="lazy">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── RIGHT · Info ────────────────────────────────────────── #}
+    <div class="product-info">
+
+      {% if mueble.category %}
+      <div class="product-eyebrow">{{ mueble.category.name }}</div>
+      {% endif %}
+
+      <h1 class="product-name">{{ mueble.name }}</h1>
+
+      <p class="product-celestial">
+        Cuerpo celeste de la colección Cosmos
+        {% if mueble.category %} · {{ mueble.category.name }}{% endif %}
+      </p>
+
+      {# Price #}
+      {% if mueble.price %}
+      <div class="product-price-block">
+        <span class="price-from">Desde</span>
+        <span class="price-amount">{{ mueble.price|number_format(0, ',', '.') }}</span>
+        <span class="price-currency">€</span>
+        <span class="price-note">IVA incluido<br>Envío gratuito</span>
+      </div>
+      {% endif %}
+
+      {# Description #}
+      {% if mueble.descriptionAi %}
+      <p class="product-desc">{{ mueble.descriptionAi }}</p>
+      {% endif %}
+
+      {# Dimensions #}
+      {% if mueble.width or mueble.height or mueble.depth %}
+      <div class="dim-row">
+        {% if mueble.width %}
+        <div class="dim-chip">
+          <span class="dim-chip-val">{{ mueble.width }} cm</span>
+          <span class="dim-chip-key">Ancho</span>
+        </div>
+        {% endif %}
+        {% if mueble.height %}
+        <div class="dim-chip">
+          <span class="dim-chip-val">{{ mueble.height }} cm</span>
+          <span class="dim-chip-key">Alto</span>
+        </div>
+        {% endif %}
+        {% if mueble.depth %}
+        <div class="dim-chip">
+          <span class="dim-chip-val">{{ mueble.depth }} cm</span>
+          <span class="dim-chip-key">Prof.</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# Color swatches #}
+      {% if gallery|length > 0 %}
+      <div class="opt-group">
+        <span class="opt-label">
+          Color disponibles
+          <span id="color-current-name"
+                style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--cyan);margin-left:6px;">
+            {{ gallery[0].name }}
+          </span>
+        </span>
+        <div class="color-swatches">
+          {% for item in gallery %}
+          <div class="color-swatch-wrap">
+            <button class="color-swatch-btn {{ loop.first ? 'active' : '' }}"
+                    style="background:{{ item.hex }};"
+                    data-url="{{ item.url }}"
+                    data-name="{{ item.name }}"
+                    data-hex="{{ item.hex }}"
+                    data-index="{{ loop.index0 }}"
+                    title="{{ item.name }}"
+                    type="button"></button>
+            <div class="color-swatch-name">{{ item.name|split(' ')|first }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Tapicería options #}
+      {% if tapicerias|length > 0 %}
+      <div class="opt-group">
+        <span class="opt-label">Tapicería</span>
+        <div class="mat-pills">
+          {% for tap in tapicerias %}
+          <span class="mat-pill">
+            <span class="mat-pill-icon">
+              {%- if 'piel' in tap|lower -%}🦎
+              {%- elseif 'terciopelo' in tap|lower -%}✨
+              {%- else -%}🪡
+              {%- endif -%}
+            </span>
+            {{ tap }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Patas options #}
+      {% if patas|length > 0 %}
+      <div class="opt-group">
+        <span class="opt-label">Patas</span>
+        <div class="mat-pills">
+          {% for pata in patas %}
+          <span class="mat-pill">
+            <span class="mat-pill-icon">
+              {%- if 'metal' in pata|lower -%}⚙️
+              {%- else -%}🪵
+              {%- endif -%}
+            </span>
+            {{ pata }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# CTA buttons #}
+      <div class="cta-group">
+        <a href="{{ path('app_mueble_configurar', {id: mueble.id}) }}" class="btn-configurar">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M2 12h4m12 0h4M12 2v4m0 12v4"/>
+          </svg>
+          Configurar este sofá en 3D
+        </a>
+
+        <button type="button" class="btn-presupuesto-show" id="btn-open-pres">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+          Solicitar presupuesto
+        </button>
+
+        <form action="{{ path('app_mueble_simulate_purchase', {id: mueble.id}) }}"
+              method="POST" style="margin-top:2px;">
+          <button type="submit" class="btn-simulate-show">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            Simular entrega (demo enlace reseña)
+          </button>
+        </form>
+      </div>
+
+    </div>{# end .product-info #}
+  </div>{# end .product-grid #}
+
+  {# ── Reviews ───────────────────────────────────────────────── #}
+  <section class="reviews-section">
+    <div class="reviews-eyebrow">Transmisiones recibidas</div>
+    <h2 class="reviews-title">Lo que dicen los exploradores</h2>
+
+    <div class="reviews-grid">
+      {% for review in mueble.reviews %}
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-stars">
+            {% for i in 1..5 %}
+              <span class="{{ i <= review.rating ? '' : 'dim' }}">★</span>
+            {% endfor %}
+          </div>
+          {% if review.sentimentAi %}
+          <span class="sentiment-badge sentiment-{{ review.sentimentAi }}">
+            IA · {{ review.sentimentAi }}
+          </span>
+          {% endif %}
+        </div>
+        <p class="review-text">{{ review.comment }}</p>
+      </div>
+      {% else %}
+      <div class="no-reviews">
+        <div style="font-size:44px; margin-bottom:12px; opacity:.4;">📡</div>
+        <p>Ninguna transmisión recibida todavía.</p>
+        <p style="margin-top:6px; font-size:13px; opacity:.6;">¡Sé el primero en opinar!</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>{# end .show-wrap #}
+
+{# ── Presupuesto modal ─────────────────────────────────────────── #}
+<div class="pres-overlay" id="pres-overlay" role="dialog" aria-modal="true">
+  <div class="pres-modal">
+    <button class="pres-close" id="pres-close" type="button" aria-label="Cerrar">✕</button>
+
+    {# Form view #}
+    <div id="pres-form-view">
+      <h2 class="pres-title">Solicitar presupuesto</h2>
+      <p class="pres-sub">Sin compromiso · Respuesta en menos de 48h</p>
+
+      <div class="pres-config-row">
+        <span class="pres-pill">{{ mueble.name }}</span>
+        {% if tapicerias|length > 0 %}
+          <span class="pres-pill">{{ tapicerias|first }}</span>
+        {% endif %}
+        <span class="pres-pill" id="pres-color-pill" style="background:rgba(0,245,255,.1);">
+          {{ gallery|length > 0 ? gallery[0].name : 'Color estándar' }}
+        </span>
+        {% if patas|length > 0 %}
+          <span class="pres-pill">{{ patas|first }}</span>
+        {% endif %}
+      </div>
+
+      <form id="pres-form" novalidate>
+        <input type="hidden" name="muebleId"               value="{{ mueble.id }}">
+        <input type="hidden" name="configuracionModelo"    value="{{ productKey }}">
+        <input type="hidden" name="configuracionTapiceria" value="{{ firstTap }}">
+        <input type="hidden" name="configuracionColor"     id="pf-color" value="{{ firstColor }}">
+        <input type="hidden" name="configuracionPatas"     value="{{ firstPata }}">
+
+        <div class="modal-field">
+          <label for="pf-name">Nombre <span style="color:#ff6b6b">*</span></label>
+          <input class="modal-input" type="text" id="pf-name" name="customerName"
+                 placeholder="Tu nombre completo" required autocomplete="name">
+        </div>
+        <div class="modal-field">
+          <label for="pf-email">Email <span style="color:#ff6b6b">*</span></label>
+          <input class="modal-input" type="email" id="pf-email" name="customerEmail"
+                 placeholder="tu@email.com" required autocomplete="email">
+        </div>
+        <div class="modal-field">
+          <label for="pf-phone">Teléfono
+            <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">— opcional</span>
+          </label>
+          <input class="modal-input" type="tel" id="pf-phone" name="customerPhone"
+                 placeholder="+34 600 000 000" autocomplete="tel">
+        </div>
+        <div class="modal-field">
+          <label for="pf-notes">Mensaje
+            <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">— opcional</span>
+          </label>
+          <textarea class="modal-input" id="pf-notes" name="notes"
+                    placeholder="¿Alguna duda o detalle?"></textarea>
+        </div>
+
+        <button type="submit" class="modal-submit" id="pres-submit">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+          Enviar solicitud
+        </button>
+        <p class="modal-error" id="pres-error"></p>
+        <p style="margin-top:10px;font-size:10px;color:var(--muted);text-align:center;line-height:1.6;">
+          Datos tratados con total confidencialidad
+        </p>
+      </form>
+    </div>
+
+    {# Success view #}
+    <div class="modal-success-view" id="pres-success-view">
+      <div class="success-orbit">
+        <div class="success-planet"></div>
+        <span class="success-rocket">🚀</span>
+      </div>
+      <h3 class="success-title">Tu solicitud ha viajado<br>al universo</h3>
+      <p class="success-sub">Nos pondremos en contacto en menos de 48 horas.</p>
+      <button class="success-cta" id="pres-success-close" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+    /* ── Gallery ──────────────────────────────────────────────── */
+    const mainImg    = document.getElementById('gallery-main-img');
+    const thumbsWrap = document.getElementById('gallery-thumbs');
+    const swatchBtns = document.querySelectorAll('.color-swatch-btn');
+    const colorNameEl = document.getElementById('color-current-name');
+    const pfColor    = document.getElementById('pf-color');
+    const presPill   = document.getElementById('pres-color-pill');
+
+    function switchImage(url, name, hex, index) {
+        // Update main image
+        if (mainImg) {
+            mainImg.style.opacity = '0';
+            setTimeout(() => { mainImg.src = url; mainImg.style.opacity = '1'; }, 180);
+        }
+        // Update color label
+        if (colorNameEl) colorNameEl.textContent = name;
+        // Update hidden form field + pill
+        if (pfColor)  pfColor.value = hex;
+        if (presPill) presPill.textContent = name;
+
+        // Highlight swatch
+        swatchBtns.forEach(b => b.classList.toggle('active', Number(b.dataset.index) === index));
+
+        // Highlight thumb
+        if (thumbsWrap) {
+            thumbsWrap.querySelectorAll('.gallery-thumb').forEach(t =>
+                t.classList.toggle('active', Number(t.dataset.index) === index));
+        }
+    }
+
+    // Colour swatch clicks
+    swatchBtns.forEach(btn => {
+        btn.addEventListener('click', () =>
+            switchImage(btn.dataset.url, btn.dataset.name, btn.dataset.hex, Number(btn.dataset.index))
+        );
+    });
+
+    // Thumbnail clicks
+    if (thumbsWrap) {
+        thumbsWrap.querySelectorAll('.gallery-thumb').forEach(thumb => {
+            thumb.addEventListener('click',  () =>
+                switchImage(thumb.dataset.url, thumb.dataset.name, thumb.dataset.hex, Number(thumb.dataset.index)));
+            thumb.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ')
+                    switchImage(thumb.dataset.url, thumb.dataset.name, thumb.dataset.hex, Number(thumb.dataset.index));
+            });
+        });
+    }
+
+    /* ── Presupuesto modal ────────────────────────────────────── */
+    const overlay    = document.getElementById('pres-overlay');
+    const openBtn    = document.getElementById('btn-open-pres');
+    const closeBtn   = document.getElementById('pres-close');
+    const form       = document.getElementById('pres-form');
+    const submitBtn  = document.getElementById('pres-submit');
+    const errorEl    = document.getElementById('pres-error');
+    const formView   = document.getElementById('pres-form-view');
+    const successView = document.getElementById('pres-success-view');
+    const successClose = document.getElementById('pres-success-close');
+
+    const open  = () => { overlay?.classList.add('open'); document.getElementById('pf-name')?.focus(); };
+    const close = () => overlay?.classList.remove('open');
+
+    openBtn?.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+    successClose?.addEventListener('click', close);
+    overlay?.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay?.classList.contains('open')) close(); });
+
+    form?.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
+        const name  = form.querySelector('[name="customerName"]')?.value.trim();
+        const email = form.querySelector('[name="customerEmail"]')?.value.trim();
+        if (!name || !email) {
+            if (errorEl) { errorEl.textContent = 'Completa nombre y email.'; errorEl.style.display = 'block'; }
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando…';
+
+        try {
+            const res  = await fetch('{{ path("app_presupuesto_solicitar") }}', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (formView)    formView.style.display = 'none';
+                if (successView) successView.classList.add('show');
+            } else {
+                if (errorEl) { errorEl.textContent = data.error ?? 'Error al enviar. Inténtalo de nuevo.'; errorEl.style.display = 'block'; }
+            }
+        } catch {
+            if (errorEl) { errorEl.textContent = 'Error de red. Inténtalo de nuevo.'; errorEl.style.display = 'block'; }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
+        }
+    });
+})();
+</script>
+{% endblock %}

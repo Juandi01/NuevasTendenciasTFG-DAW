@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nuevas Tendencias{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── Tokens ────────────────────────────────────────────── */
+        :root {
+            --bg:      #06060f;
+            --card-bg: rgba(8,8,30,.85);
+            --cyan:    #00f5ff;
+            --violet:  #7b2fff;
+            --gold:    #ffc04d;
+            --success: #00ffb3;
+            --danger:  #ff4d6d;
+            --text:    #e8eaff;
+            --muted:   #6b6b9a;
+            --border:  rgba(255,255,255,.07);
+            --nav-h:   72px;
+        }
+
+        /* ── Nebula background — 3 drifting gradient blobs ──────── */
+        .nebula-bg {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden;
+        }
+        .nebula-bg::before,
+        .nebula-bg::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+        .nebula-bg::before {
+            width: 70vw; height: 70vw;
+            top: -20vw; left: -15vw;
+            background: radial-gradient(ellipse at 40% 40%,
+                rgba(123,47,255,.18) 0%,
+                rgba(0,245,255,.06) 45%,
+                transparent 70%);
+            animation: nebDrift1 55s ease-in-out infinite alternate;
+        }
+        .nebula-bg::after {
+            width: 60vw; height: 60vw;
+            bottom: -15vw; right: -10vw;
+            background: radial-gradient(ellipse at 60% 60%,
+                rgba(0,245,255,.12) 0%,
+                rgba(123,47,255,.08) 40%,
+                transparent 70%);
+            animation: nebDrift2 70s ease-in-out infinite alternate;
+        }
+
+        .nebula-mid {
+            position: fixed; z-index: 0; pointer-events: none;
+            width: 50vw; height: 50vw;
+            top: 25vh; left: 30vw;
+            border-radius: 50%;
+            background: radial-gradient(ellipse,
+                rgba(255,192,77,.04) 0%,
+                rgba(123,47,255,.05) 35%,
+                transparent 70%);
+            filter: blur(60px);
+            animation: nebDrift3 90s ease-in-out infinite alternate;
+        }
+
+        /* Two extra ambient orbs for deeper layering */
+        .nebula-accent-a {
+            position: fixed; z-index: 0; pointer-events: none;
+            width: 35vw; height: 35vw;
+            bottom: 10vh; left: 5vw;
+            border-radius: 50%;
+            background: radial-gradient(ellipse,
+                rgba(0,245,255,.05) 0%,
+                rgba(123,47,255,.03) 40%,
+                transparent 70%);
+            filter: blur(50px);
+            animation: nebDrift4 80s ease-in-out infinite alternate;
+        }
+        .nebula-accent-b {
+            position: fixed; z-index: 0; pointer-events: none;
+            width: 28vw; height: 28vw;
+            top: 15vh; right: 8vw;
+            border-radius: 50%;
+            background: radial-gradient(ellipse,
+                rgba(255,192,77,.06) 0%,
+                rgba(0,245,255,.02) 40%,
+                transparent 70%);
+            filter: blur(45px);
+            animation: nebDrift5 65s ease-in-out infinite alternate;
+        }
+
+        /* Subtle dot-grid overlay */
+        .space-grid {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image:
+                radial-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%,
+                black 30%, transparent 100%);
+        }
+
+        @keyframes nebDrift1 {
+            from { transform: translate(0,0)      scale(1)    rotate(0deg); }
+            to   { transform: translate(6vw,4vh)  scale(1.12) rotate(8deg); }
+        }
+        @keyframes nebDrift2 {
+            from { transform: translate(0,0)      scale(1)    rotate(0deg); }
+            to   { transform: translate(-4vw,-6vh) scale(1.08) rotate(-6deg); }
+        }
+        @keyframes nebDrift3 {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(-8vw,5vh) scale(1.2); }
+        }
+        @keyframes nebDrift4 {
+            from { transform: translate(0,0) scale(1) rotate(0deg); }
+            to   { transform: translate(5vw,-4vh) scale(1.15) rotate(12deg); }
+        }
+        @keyframes nebDrift5 {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(-3vw,6vh) scale(1.1); }
+        }
+
+        /* ── Starfield canvas ──────────────────────────────────── */
+        #starfield-canvas {
+            position: fixed; inset: 0; z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ── Cursor glow ───────────────────────────────────────── */
+        #cursor-glow {
+            position: fixed; z-index: 2; pointer-events: none;
+            width: 480px; height: 480px;
+            margin: -240px 0 0 -240px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(0,245,255,.055) 0%,
+                rgba(123,47,255,.025) 35%,
+                transparent 65%);
+            opacity: 0;
+            will-change: transform, opacity;
+            transition: opacity .4s ease;
+        }
+
+        /* ── Navigation ────────────────────────────────────────── */
+        .cosmos-nav {
+            position: sticky; top: 0; z-index: 100;
+            height: var(--nav-h);
+            display: flex; align-items: center;
+            padding: 0 max(24px, calc((100vw - 1280px) / 2));
+            background: rgba(6,6,15,.75);
+            backdrop-filter: blur(20px) saturate(1.4);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            gap: 40px;
+        }
+
+        .nav-logo {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; flex-shrink: 0;
+        }
+        .nav-logo-orb {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,245,255,.35), 0 0 40px rgba(123,47,255,.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            transition: box-shadow .3s;
+        }
+        .nav-logo:hover .nav-logo-orb {
+            box-shadow: 0 0 30px rgba(0,245,255,.55), 0 0 60px rgba(123,47,255,.35);
+        }
+        .nav-logo-text {
+            font-size: 18px; font-weight: 700; letter-spacing: -.01em;
+            background: linear-gradient(90deg, var(--text) 30%, var(--cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex; align-items: center; gap: 4px; flex: 1;
+        }
+        .nav-link {
+            padding: 7px 16px; border-radius: 8px;
+            font-size: 14px; font-weight: 500; text-decoration: none;
+            color: var(--muted); transition: all .18s;
+            position: relative;
+        }
+        .nav-link:hover { color: var(--text); background: rgba(255,255,255,.05); }
+        .nav-link.active {
+            color: var(--cyan); background: rgba(0,245,255,.08);
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+            width: 20px; height: 1px;
+            background: var(--cyan);
+            box-shadow: 0 0 6px var(--cyan);
+        }
+
+        .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+        .nav-cta {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 20px; border-radius: 24px;
+            font-size: 13px; font-weight: 600; text-decoration: none;
+            background: linear-gradient(135deg, rgba(0,245,255,.15), rgba(123,47,255,.15));
+            border: 1px solid rgba(0,245,255,.3);
+            color: var(--cyan); transition: all .2s;
+        }
+        .nav-cta:hover {
+            background: linear-gradient(135deg, rgba(0,245,255,.25), rgba(123,47,255,.2));
+            box-shadow: 0 0 20px rgba(0,245,255,.25);
+            transform: translateY(-1px);
+        }
+        .nav-admin-link {
+            font-size: 12px; color: var(--muted); text-decoration: none;
+            padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+            transition: all .18s;
+        }
+        .nav-admin-link:hover { color: var(--violet); border-color: rgba(123,47,255,.4); }
+
+        /* ── Page wrapper ──────────────────────────────────────── */
+        .cosmos-page {
+            position: relative; z-index: 2;
+            animation: cosmosFadeIn .45s cubic-bezier(.16,.84,.44,1) both;
+        }
+        @keyframes cosmosFadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Scroll-reveal ─────────────────────────────────────── */
+        .cosmos-reveal-pending {
+            opacity: 0;
+            transform: translateY(28px) scale(.97);
+            transition:
+                opacity  .58s cubic-bezier(.16,.84,.44,1),
+                transform .58s cubic-bezier(.16,.84,.44,1);
+        }
+        .cosmos-reveal-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* ── Footer ────────────────────────────────────────────── */
+        .cosmos-footer {
+            position: relative; z-index: 2;
+            margin-top: 120px;
+            padding: 40px max(24px, calc((100vw - 1280px) / 2));
+            border-top: 1px solid rgba(255,255,255,.06);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 16px;
+            font-size: 13px; color: var(--muted);
+        }
+        .footer-brand {
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--cyan), var(--violet));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .footer-links { display: flex; gap: 20px; }
+        .footer-links a { color: var(--muted); text-decoration: none; transition: color .15s; }
+        .footer-links a:hover { color: var(--text); }
+
+        /* ── Flash messages ────────────────────────────────────── */
+        .flash-container {
+            position: fixed; top: calc(var(--nav-h) + 16px); right: 24px;
+            z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+        }
+        .flash-msg {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+            backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0,0,0,.5);
+            animation: flashIn .3s ease both;
+            max-width: 380px; line-height: 1.5;
+        }
+        .flash-success { background: rgba(0,255,179,.1); border: 1px solid rgba(0,255,179,.3); color: var(--success); }
+        .flash-error   { background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.3); color: var(--danger); }
+        .flash-info    { background: rgba(0,245,255,.1); border: 1px solid rgba(0,245,255,.3); color: var(--cyan); }
+        @keyframes flashIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+
+<body>
+
+{# ── Nebula background layers ──────────────────────────────────── #}
+<div class="nebula-bg"      aria-hidden="true"></div>
+<div class="nebula-mid"     aria-hidden="true"></div>
+<div class="nebula-accent-a" aria-hidden="true"></div>
+<div class="nebula-accent-b" aria-hidden="true"></div>
+<div class="space-grid"     aria-hidden="true"></div>
+
+{# ── Cursor glow ───────────────────────────────────────────────── #}
+<div id="cursor-glow" aria-hidden="true"></div>
+
+{# ── Starfield canvas ───────────────────────────────────────────── #}
+<div data-controller="starfield">
+    <canvas id="starfield-canvas" data-starfield-target="canvas" aria-hidden="true"></canvas>
+</div>
+
+{# ── Navigation ─────────────────────────────────────────────────── #}
+{% set currentRoute = app.request.attributes.get('_route') %}
+<nav class="cosmos-nav" aria-label="Navegación principal">
+    <a href="{{ path('app_home') }}" class="nav-logo">
+        <div class="nav-logo-orb">🛋️</div>
+        <span class="nav-logo-text">Nuevas Tendencias</span>
+    </a>
+
+    <div class="nav-links">
+        <a href="{{ path('app_home') }}"
+           class="nav-link {{ currentRoute == 'app_home' ? 'active' : '' }}">Catálogo</a>
+        <a href="{{ path('app_mueble_configurator') }}"
+           class="nav-link {{ currentRoute == 'app_mueble_configurator' ? 'active' : '' }}">Configurador 3D</a>
+    </div>
+
+    <div class="nav-right">
+        <a href="{{ path('app_mueble_configurator') }}" class="nav-cta">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            Diseña tu sofá
+        </a>
+        {% if app.user %}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_admin_dashboard') }}" class="nav-admin-link" title="Panel de administración">⚙ Admin</a>
+            {% endif %}
+            <a href="{{ path('app_perfil') }}" class="nav-admin-link" title="Mi perfil" style="gap:6px;">
+                👤 {{ app.user.nombre }}
+            </a>
+        {% else %}
+            <a href="{{ path('app_login') }}" class="nav-admin-link">Iniciar sesión</a>
+            <a href="{{ path('app_register') }}" class="nav-cta" style="background:transparent;border:1px solid rgba(0,245,255,.3);color:#00f5ff;">Registrarse</a>
+        {% endif %}
+    </div>
+</nav>
+
+{# ── Flash messages ──────────────────────────────────────────────── #}
+{% set allFlashes = app.flashes(['success','error','info']) %}
+{% if allFlashes is not empty %}
+<div class="flash-container" id="flash-msgs">
+    {% for type, msgs in allFlashes %}
+        {% for msg in msgs %}
+        <div class="flash-msg flash-{{ type }}">{{ msg }}</div>
+        {% endfor %}
+    {% endfor %}
+</div>
+<script>
+setTimeout(() => {
+    const c = document.getElementById('flash-msgs');
+    if (c) c.style.cssText = 'opacity:0;transition:opacity .4s ease';
+    setTimeout(() => c?.remove(), 450);
+}, 4500);
+</script>
+{% endif %}
+
+{# ── Page content ───────────────────────────────────────────────── #}
+<div class="cosmos-page">
+    {% block body %}{% endblock %}
+</div>
+
+{# ── Footer ─────────────────────────────────────────────────────── #}
+<footer class="cosmos-footer">
+    <div>
+        <span class="footer-brand">Nuevas Tendencias</span>
+        &nbsp;·&nbsp; Showroom virtual · TFG 2026
+    </div>
+    <div class="footer-links">
+        <a href="{{ path('app_home') }}">Catálogo</a>
+        <a href="{{ path('app_mueble_configurator') }}">Configurador</a>
+        <a href="{{ path('app_admin_dashboard') }}">Admin</a>
+    </div>
+</footer>
+
+{% block javascripts %}
+    {% block importmap %}{{ importmap('app') }}{% endblock %}
+{% endblock %}
+
+<script>
+    /* Re-trigger page animation on Turbo navigation */
+    document.addEventListener('turbo:load', () => {
+        const page = document.querySelector('.cosmos-page');
+        if (!page) return;
+        page.style.animation = 'none';
+        void page.offsetWidth;
+        page.style.animation = '';
+    });
+
+    /* Cursor glow follower */
+    (function () {
+        const glow = document.getElementById('cursor-glow');
+        if (!glow) return;
+        let visible = false;
+        document.addEventListener('mousemove', e => {
+            glow.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+            if (!visible) { glow.style.opacity = '1'; visible = true; }
+        }, { passive: true });
+        document.addEventListener('mouseleave', () => {
+            glow.style.opacity = '0'; visible = false;
+        });
+    })();
+</script>
+</body>
+</html>

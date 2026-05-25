@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+parameters:
+    # 1. Definimos el parámetro que lee del archivo .env
+    ai_api_key: '%env(AI_API_KEY)%'
+
+services:
+    _defaults:
+        autowire: true      
+        autoconfigure: true 
+
+        # 2. Hacemos el "vínculo" (bind). 
+        # Esto le dice a Symfony: "Cuando veas una variable llamada $aiApiKey, 
+        # dale el valor del parámetro que definimos arriba".
+        bind:
+            $aiApiKey: '%ai_api_key%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'

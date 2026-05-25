@@ -1,0 +1,547 @@
+{% extends 'admin/space_base.html.twig' %}
+
+{% block title %}Imágenes & Modelos 3D{% endblock %}
+{% block breadcrumb %}Imágenes / 3D{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Product media card ──────────────────────────────────── */
+.media-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.media-card-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,.02);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+}
+.media-card-header:hover { background: rgba(0,245,255,.04); }
+.media-card-body { padding: 20px; }
+
+.media-card-toggle {
+    margin-left: auto;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    transition: transform .2s, background .15s;
+    flex-shrink: 0;
+}
+.media-card-header.open .media-card-toggle { transform: rotate(180deg); background: rgba(0,245,255,.1); color: var(--cyan); }
+
+/* ── Section tabs inside card ────────────────────────────── */
+.media-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin: -20px -20px 20px;
+    padding: 0 20px;
+}
+.media-tab {
+    padding: 12px 18px;
+    font-size: 12px; font-weight: 600; letter-spacing:.06em; text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    user-select: none;
+}
+.media-tab.active      { color: var(--cyan); border-bottom-color: var(--cyan); }
+.media-tab-panel       { display: none; }
+.media-tab-panel.active{ display: block; }
+
+/* ── Image grid ──────────────────────────────────────────── */
+.img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+    min-height: 10px;
+}
+.img-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.3);
+    transition: border-color .15s, box-shadow .15s;
+}
+.img-card:hover { border-color: rgba(0,245,255,.35); box-shadow: 0 0 14px rgba(0,245,255,.1); }
+
+.img-preview {
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    position: relative;
+}
+.img-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: .85;
+    transition: opacity .2s, transform .2s;
+}
+.img-card:hover .img-preview img { opacity: 1; transform: scale(1.04); }
+
+.img-portada-badge {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(0,245,255,.2); color: var(--cyan);
+    font-size: 9px; font-weight: 700; letter-spacing:.08em; text-transform:uppercase;
+    padding: 2px 7px; border-radius: 10px;
+    border: 1px solid rgba(0,245,255,.3);
+}
+.img-meta { padding: 7px 8px 4px; }
+.img-meta-name { font-size: 11px; font-weight: 500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.img-meta-size { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+.img-delete-form { position: absolute; top: 6px; right: 6px; margin: 0; }
+.img-delete-btn {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(10,10,26,.7); border: 1px solid rgba(255,77,109,.4);
+    color: var(--danger); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+    opacity: 0;
+    backdrop-filter: blur(4px);
+}
+.img-card:hover .img-delete-btn { opacity: 1; }
+.img-delete-btn:hover { background: rgba(255,77,109,.2); }
+
+/* ── Upload drop zone ────────────────────────────────────── */
+.drop-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .18s, background .18s;
+    position: relative;
+}
+.drop-zone:hover, .drop-zone.dragover {
+    border-color: rgba(0,245,255,.5);
+    background: rgba(0,245,255,.04);
+}
+.drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.drop-zone-icon { font-size: 24px; margin-bottom: 6px; }
+.drop-zone-text { font-size: 12px; color: var(--muted); }
+.drop-zone-text strong { color: var(--cyan); }
+
+/* ── 3D model list ───────────────────────────────────────── */
+.model-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; min-height: 10px; }
+.model-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color .15s;
+}
+.model-row:hover { border-color: rgba(123,47,255,.35); }
+.model-row-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(123,47,255,.12);
+    border: 1px solid rgba(123,47,255,.25);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--violet); flex-shrink: 0;
+}
+.model-row-info { flex: 1; min-width: 0; }
+.model-row-name { font-size: 13px; font-weight: 600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.model-row-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.btn-cyan-sm {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    background: rgba(0,245,255,.1); border: 1px solid rgba(0,245,255,.3);
+    color: var(--cyan); cursor: pointer; font-family: inherit;
+    transition: background .15s, box-shadow .15s;
+    white-space: nowrap;
+}
+.btn-cyan-sm:hover { background: rgba(0,245,255,.18); box-shadow: 0 0 12px rgba(0,245,255,.2); }
+.btn-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    color: var(--muted); cursor: pointer; font-family: inherit;
+    transition: all .15s;
+}
+.btn-icon.btn-danger:hover { background: rgba(255,77,109,.1); border-color: rgba(255,77,109,.3); color: var(--danger); }
+
+/* ── Upload form ─────────────────────────────────────────── */
+.upload-form { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.upload-label { font-size: 11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:block; }
+.upload-input {
+    background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 8px 12px; outline: none; width: 200px;
+    transition: border-color .18s;
+}
+.upload-input:focus { border-color: rgba(0,245,255,.5); }
+
+/* ── 3D Viewer modal ─────────────────────────────────────── */
+.viewer-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(6,6,20,.96);
+    backdrop-filter: blur(12px);
+    display: none;
+    flex-direction: column;
+}
+.viewer-topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,26,.8);
+    flex-shrink: 0;
+}
+.viewer-title { font-size: 15px; font-weight: 700; color: var(--cyan); }
+.viewer-hint  { font-size: 12px; color: var(--muted); }
+.viewer-close {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 16px; border-radius: 8px;
+    background: rgba(255,77,109,.08); border: 1px solid rgba(255,77,109,.3);
+    color: var(--danger); font-size: 13px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: background .15s;
+}
+.viewer-close:hover { background: rgba(255,77,109,.18); }
+
+.viewer-canvas {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+.viewer-spinner {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; pointer-events: none;
+}
+.spinner-ring {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 3px solid rgba(0,245,255,.15);
+    border-top-color: var(--cyan);
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Flash toasts ────────────────────────────────────────── */
+#flash-zone { position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.flash-toast {
+    display: flex; align-items: center; gap: 9px;
+    padding: 12px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.flash-success { background: rgba(0,255,179,.1); border: 1px solid rgba(0,255,179,.3); color: var(--success); }
+@keyframes fadeInSlide { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-slot {
+    text-align: center; padding: 28px 16px;
+    color: var(--muted); font-size: 12px;
+    border: 1.5px dashed rgba(30,30,74,.8);
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Flash zone ───────────────────────────────────────────── #}
+<div id="flash-zone">
+    {% for msg in app.flashes('success') %}
+    <div class="flash-toast flash-success">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        {{ msg }}
+    </div>
+    {% endfor %}
+    {% for msg in app.flashes('error') %}
+    <div class="flash-toast" style="background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);color:var(--danger);">
+        ⚠ {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+
+{# ── 3D Viewer modal (single, reused by all model previews) ── #}
+<div class="viewer-overlay"
+     data-controller="model-viewer"
+     data-model-viewer-target="overlay">
+
+    <div class="viewer-topbar">
+        <div>
+            <div class="viewer-title" data-model-viewer-target="label">Modelo 3D</div>
+            <div class="viewer-hint">Arrastra para rotar · Scroll para zoom · Esc para cerrar</div>
+        </div>
+        <button class="viewer-close" data-action="click->model-viewer#close">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            Cerrar
+        </button>
+    </div>
+
+    <div class="viewer-canvas" data-model-viewer-target="canvas">
+        <div class="viewer-spinner" data-model-viewer-target="spinner">
+            <div class="spinner-ring"></div>
+            <div style="font-size:13px;color:var(--muted);">Cargando modelo…</div>
+        </div>
+    </div>
+</div>
+
+{# ── Page header ──────────────────────────────────────────── #}
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <div>
+        <div class="page-title">Imágenes & Modelos 3D</div>
+        <div class="page-subtitle">
+            {{ muebles|length }} producto{{ muebles|length != 1 ? 's' : '' }} · gestión de assets visuales
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <span class="badge" style="background:rgba(0,245,255,.08);color:var(--cyan);border:1px solid rgba(0,245,255,.2);font-size:11px;padding:5px 12px;">
+            VichUploader {{ constant('Vich\\UploaderBundle\\VichUploaderBundle::VERSION') is defined ? '' : 'v2' }} activo
+        </span>
+        <a href="{{ path('app_mueble_configurator') }}" target="_blank" class="btn btn-cyan" style="padding:7px 14px;font-size:12px;">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            Configurador 3D
+        </a>
+    </div>
+</div>
+
+{% if muebles is empty %}
+    <div class="card" style="text-align:center; padding:64px; color:var(--muted);">
+        <div style="font-size:40px;margin-bottom:14px;">📦</div>
+        <p style="font-size:15px;">No hay productos. <a href="{{ path('app_admin_producto_new') }}" style="color:var(--cyan);">Crea uno primero.</a></p>
+    </div>
+{% else %}
+
+{# ── Per-product media cards ───────────────────────────────── #}
+{% for mueble in muebles %}
+<div class="media-card">
+
+    {# Header (click to expand/collapse) #}
+    <div class="media-card-header" onclick="toggleCard({{ mueble.id }})">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📦</div>
+        <div>
+            <div style="font-size:14px;font-weight:700;">{{ mueble.name }}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+                <span class="badge badge-violet" style="font-size:10px;padding:1px 7px;">{{ mueble.category.name }}</span>
+                &nbsp;
+                <span style="color:var(--muted);">{{ mueble.medias|length }} imagen{{ mueble.medias|length != 1 ? 'es' : '' }}</span>
+                &nbsp;·&nbsp;
+                <span style="color:var(--muted);">{{ mueble.productModels|length }} modelo{{ mueble.productModels|length != 1 ? 's' : '' }} 3D</span>
+            </div>
+        </div>
+
+        {# Status indicators #}
+        <div style="display:flex;gap:8px;margin-left:16px;">
+            {% if mueble.medias|length > 0 %}
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--success);">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--success);"></span>
+                    {{ mueble.medias|length }} imgs
+                </span>
+            {% else %}
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></span>
+                    Sin imágenes
+                </span>
+            {% endif %}
+            {% if mueble.productModels|length > 0 %}
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--violet);">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--violet);box-shadow:0 0 4px var(--violet);"></span>
+                    {{ mueble.productModels|length }} 3D
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="media-card-toggle" id="toggle-{{ mueble.id }}">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+    </div>
+
+    {# Body (initially collapsed) #}
+    <div class="media-card-body" id="body-{{ mueble.id }}" style="display:none;">
+
+        <div class="media-tabs" id="tabs-{{ mueble.id }}">
+            <div class="media-tab active" onclick="switchTab({{ mueble.id }}, 'images', this)">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:5px;vertical-align:-2px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                Imágenes ({{ mueble.medias|length }})
+            </div>
+            <div class="media-tab" onclick="switchTab({{ mueble.id }}, 'models', this)">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:5px;vertical-align:-2px;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Modelos 3D ({{ mueble.productModels|length }})
+            </div>
+        </div>
+
+        {# ── IMAGES tab ─────────────────────────────────── #}
+        <div class="media-tab-panel active" id="panel-images-{{ mueble.id }}">
+
+            {# Image grid #}
+            <div class="img-grid" id="img-grid-{{ mueble.id }}">
+                {% for media in mueble.medias %}
+                    {% include 'admin/_media_image_card.html.twig' with {media: media} %}
+                {% endfor %}
+            </div>
+
+            {% if mueble.medias is empty %}
+            <div class="empty-slot" id="img-empty-{{ mueble.id }}">
+                Sin imágenes · Sube la primera abajo
+            </div>
+            {% endif %}
+
+            {# Upload image form #}
+            <form method="post" enctype="multipart/form-data"
+                  action="{{ path('app_admin_media_image_new', {id: mueble.id}) }}"
+                  style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+                <input type="hidden" name="_token" value="{{ csrf_token('img-' ~ mueble.id) }}">
+
+                <div style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
+                    Subir imagen
+                </div>
+
+                <div class="drop-zone" id="dz-img-{{ mueble.id }}"
+                     ondragover="this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="this.classList.remove('dragover')">
+                    <input type="file" name="imageFile" accept="image/*"
+                           onchange="previewDropzone(this, 'dz-img-{{ mueble.id }}')">
+                    <div class="drop-zone-icon">🖼</div>
+                    <div class="drop-zone-text">
+                        <strong>Elige un archivo</strong> o arrástralo aquí<br>
+                        PNG, JPG, WebP · Máx. 5 MB
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:flex-end;">
+                    <div>
+                        <label class="upload-label" for="alt-{{ mueble.id }}">Texto alternativo</label>
+                        <input type="text" name="altText" id="alt-{{ mueble.id }}"
+                               class="upload-input" placeholder="{{ mueble.name }}"
+                               value="{{ mueble.name }}">
+                    </div>
+                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding-bottom:2px;">
+                        <input type="checkbox" name="isPortada" value="1"
+                               style="width:14px;height:14px;accent-color:var(--cyan);">
+                        <span style="color:var(--muted);">Usar como portada</span>
+                    </label>
+                    <button type="submit" class="btn btn-violet" style="padding:8px 18px;font-size:12px;">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Subir
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {# ── MODELS 3D tab ──────────────────────────────── #}
+        <div class="media-tab-panel" id="panel-models-{{ mueble.id }}">
+
+            {# Model list #}
+            <div class="model-list" id="mdl-list-{{ mueble.id }}">
+                {% for model in mueble.productModels %}
+                    {% include 'admin/_media_model_row.html.twig' with {model: model} %}
+                {% endfor %}
+            </div>
+
+            {% if mueble.productModels is empty %}
+            <div class="empty-slot" style="margin-bottom:16px;">
+                Sin modelos 3D · Sube un archivo .glb o .gltf
+            </div>
+            {% endif %}
+
+            {# Upload model form #}
+            <div style="padding-top:16px;border-top:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
+                    Subir modelo 3D
+                </div>
+
+                <form method="post" enctype="multipart/form-data"
+                      action="{{ path('app_admin_media_model_new', {id: mueble.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('mdl-' ~ mueble.id) }}">
+
+                    <div class="drop-zone" id="dz-mdl-{{ mueble.id }}"
+                         ondragover="this.classList.add('dragover')"
+                         ondragleave="this.classList.remove('dragover')"
+                         ondrop="this.classList.remove('dragover')"
+                         style="border-color:rgba(123,47,255,.3);">
+                        <input type="file" name="modelFile" accept=".glb,.gltf"
+                               onchange="previewDropzone(this, 'dz-mdl-{{ mueble.id }}')">
+                        <div class="drop-zone-icon">🌐</div>
+                        <div class="drop-zone-text">
+                            <strong style="color:var(--violet);">Elige un modelo</strong> o arrástralo aquí<br>
+                            Formatos: <code style="color:var(--violet);font-size:11px;">.glb</code> · <code style="color:var(--violet);font-size:11px;">.gltf</code> · Máx. 50 MB
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <label class="upload-label" for="dname-{{ mueble.id }}">Nombre del modelo</label>
+                            <input type="text" name="displayName" id="dname-{{ mueble.id }}"
+                                   class="upload-input" placeholder="Ej: {{ mueble.name }} — High Poly">
+                        </div>
+                        <button type="submit" class="btn btn-violet" style="padding:8px 18px;font-size:12px;background:linear-gradient(135deg,var(--violet),#5a1fc8);">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Subir modelo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>{# /media-card-body #}
+</div>{# /media-card #}
+{% endfor %}
+
+{% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// ── Card expand/collapse ──────────────────────────────────
+function toggleCard(id) {
+    const body   = document.getElementById('body-' + id);
+    const header = body.previousElementSibling;
+    const toggle = document.getElementById('toggle-' + id);
+    const open   = body.style.display === 'none';
+    body.style.display   = open ? 'block' : 'none';
+    toggle.parentElement.classList.toggle('open', open);
+}
+
+// ── Tab switching ─────────────────────────────────────────
+function switchTab(id, panel, el) {
+    const container = document.getElementById('body-' + id);
+    container.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
+    container.querySelectorAll('.media-tab-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-' + panel + '-' + id).classList.add('active');
+}
+
+// ── Drop zone preview ─────────────────────────────────────
+function previewDropzone(input, dzId) {
+    const dz   = document.getElementById(dzId);
+    const file = input.files[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const icon = dz.querySelector('.drop-zone-icon');
+    const text = dz.querySelector('.drop-zone-text');
+    text.innerHTML = `<strong style="color:var(--cyan);">${file.name}</strong><br><span style="color:var(--muted);">${(file.size/1024).toFixed(0)} KB</span>`;
+    icon.textContent = isImage ? '🖼' : '✅';
+
+    if (isImage) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            icon.innerHTML = `<img src="${e.target.result}" style="max-height:60px;border-radius:4px;opacity:.8;">`;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+</script>
+{% endblock %}

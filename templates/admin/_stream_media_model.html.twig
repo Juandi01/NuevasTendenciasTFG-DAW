@@ -1,0 +1,14 @@
+<turbo-stream action="prepend" target="mdl-list-{{ mueble.id }}">
+    <template>
+        {% include 'admin/_media_model_row.html.twig' with {model: model} %}
+    </template>
+</turbo-stream>
+<turbo-stream action="prepend" target="flash-zone">
+    <template>
+        <div class="flash-toast flash-success" id="flash-mdl-{{ model.id }}" style="animation:fadeInSlide .3s ease;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+            Modelo 3D subido: {{ model.displayName }}
+        </div>
+        <script>setTimeout(()=>document.getElementById('flash-mdl-{{ model.id }}')?.remove(),3500)</script>
+    </template>
+</turbo-stream>

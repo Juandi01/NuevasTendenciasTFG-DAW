@@ -1,0 +1,28 @@
+{# Replace badge in list row #}
+<turbo-stream action="replace" target="presupuesto-badge-{{ presupuesto.id }}">
+    <template>
+        <span id="presupuesto-badge-{{ presupuesto.id }}">
+            {% include 'admin/_presupuesto_status_badge.html.twig' %}
+        </span>
+    </template>
+</turbo-stream>
+
+{# Replace status block in detail panel #}
+<turbo-stream action="replace" target="presupuesto-status-block-{{ presupuesto.id }}">
+    <template>
+        {% include 'admin/_presupuesto_status_block.html.twig' %}
+    </template>
+</turbo-stream>
+
+{# Toast #}
+<turbo-stream action="prepend" target="flash-zone">
+    <template>
+        <div class="flash-toast flash-success" id="flash-ps-{{ presupuesto.id }}" style="animation:fadeInSlide .3s ease;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Presupuesto #{{ presupuesto.id }} → {{ presupuesto.estado.label }}
+        </div>
+        <script>setTimeout(()=>document.getElementById('flash-ps-{{ presupuesto.id }}')?.remove(),3500)</script>
+    </template>
+</turbo-stream>

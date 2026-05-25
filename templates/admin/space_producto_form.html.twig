@@ -1,0 +1,368 @@
+{% extends 'admin/space_base.html.twig' %}
+
+{% block title %}{{ mode == 'new' ? 'Nuevo producto' : 'Editar · ' ~ mueble.name }}{% endblock %}
+{% block breadcrumb %}
+    <a href="{{ path('app_admin_productos') }}" style="color:var(--muted); text-decoration:none;">Productos</a>
+    &nbsp;/&nbsp;<strong>{{ mode == 'new' ? 'Nuevo' : mueble.name }}</strong>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Form inputs ─────────────────────────────────────────── */
+.field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+}
+.field-label .required-star {
+    color: var(--danger);
+    margin-left: 3px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.form-textarea { resize: vertical; min-height: 90px; }
+.form-input::placeholder,
+.form-textarea::placeholder { color: var(--muted); opacity: .7; }
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.1);
+}
+.form-input.is-invalid,
+.form-textarea.is-invalid,
+.form-select.is-invalid {
+    border-color: rgba(255,77,109,.5);
+    box-shadow: 0 0 0 3px rgba(255,77,109,.1);
+}
+
+/* Select arrow */
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b9a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+.form-select option { background: #10103a; }
+
+/* Input with suffix/prefix */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color .18s, box-shadow .18s;
+}
+.input-group:focus-within {
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.1);
+}
+.input-group .form-input {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    flex: 1;
+}
+.input-group .form-input:focus { box-shadow: none; border: none; }
+.input-suffix {
+    display: flex; align-items: center; padding: 0 12px;
+    background: rgba(255,255,255,.03);
+    border-left: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); white-space: nowrap;
+    font-weight: 500;
+}
+.input-prefix {
+    display: flex; align-items: center; padding: 0 12px;
+    background: rgba(255,255,255,.03);
+    border-right: 1px solid var(--border);
+    font-size: 13px; color: var(--cyan); white-space: nowrap;
+    font-weight: 600;
+}
+
+/* Toggle switch */
+.toggle-wrap {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .18s;
+}
+.toggle-wrap:hover { border-color: rgba(0,245,255,.3); }
+.toggle-track {
+    position: relative;
+    width: 40px; height: 22px;
+    border-radius: 11px;
+    background: rgba(107,107,154,.3);
+    border: 1px solid rgba(107,107,154,.3);
+    flex-shrink: 0;
+    transition: background .2s, border-color .2s;
+}
+.toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform .2s, background .2s;
+}
+input[type="checkbox"]:checked + .toggle-wrap .toggle-track,
+.toggle-wrap.is-on .toggle-track {
+    background: rgba(0,245,255,.2);
+    border-color: rgba(0,245,255,.4);
+    box-shadow: 0 0 8px rgba(0,245,255,.25);
+}
+input[type="checkbox"]:checked + .toggle-wrap .toggle-thumb,
+.toggle-wrap.is-on .toggle-thumb {
+    transform: translateX(18px);
+    background: var(--cyan);
+}
+.toggle-label { font-size: 14px; font-weight: 500; }
+.toggle-sub   { font-size: 12px; color: var(--muted); }
+
+/* Field error */
+.field-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 5px;
+}
+
+/* Section divider */
+.form-section {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+}
+.form-section-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+    <div>
+        <div class="page-title">
+            {{ mode == 'new' ? 'Nuevo producto' : 'Editar producto' }}
+        </div>
+        <div class="page-subtitle">
+            {% if mode == 'new' %}
+                Completa los datos para añadir al catálogo
+            {% else %}
+                Modificando: {{ mueble.name }}
+            {% endif %}
+        </div>
+    </div>
+    <a href="{{ path('app_admin_productos') }}" class="btn btn-cyan" style="padding:8px 16px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Volver
+    </a>
+</div>
+
+{{ form_start(form, {attr: {novalidate: 'novalidate', style: 'max-width:860px;'}}) }}
+
+{# ── Row 1: Nombre + Categoría ────────────────────────────── #}
+<div class="grid-2" style="margin-bottom:24px;">
+
+    <div class="card">
+        <div class="form-section">
+            <span class="form-section-dot" style="background:var(--cyan);box-shadow:0 0 5px var(--cyan);"></span>
+            Identificación
+        </div>
+        <div style="margin-bottom:18px;">
+            <label class="field-label" for="{{ form.name.vars.id }}">
+                Nombre<span class="required-star">*</span>
+            </label>
+            {{ form_widget(form.name, {attr: {class: 'form-input' ~ (form.name.vars.errors|length ? ' is-invalid' : '')}}) }}
+            {% if form.name.vars.errors|length %}
+                <div class="field-error">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {{ form_errors(form.name) }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="field-label" for="{{ form.category.vars.id }}">
+                Categoría<span class="required-star">*</span>
+            </label>
+            {{ form_widget(form.category, {attr: {class: 'form-select' ~ (form.category.vars.errors|length ? ' is-invalid' : '')}}) }}
+            {% if form.category.vars.errors|length %}
+                <div class="field-error">{{ form_errors(form.category) }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="form-section">
+            <span class="form-section-dot" style="background:var(--violet);box-shadow:0 0 5px var(--violet);"></span>
+            Descripción
+        </div>
+        <label class="field-label" for="{{ form.descriptionAi.vars.id }}">Descripción</label>
+        {{ form_widget(form.descriptionAi, {attr: {class: 'form-textarea', rows: 5, style: 'min-height:110px;'}}) }}
+        {% if form.descriptionAi.vars.errors|length %}
+            <div class="field-error">{{ form_errors(form.descriptionAi) }}</div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Row 2: Precio + Dimensiones ──────────────────────────── #}
+<div class="card" style="margin-bottom:24px;">
+    <div class="form-section">
+        <span class="form-section-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></span>
+        Precio & Dimensiones
+    </div>
+
+    <div style="display:grid; grid-template-columns:200px 1fr 1fr 1fr; gap:20px;">
+
+        <div>
+            <label class="field-label" for="{{ form.price.vars.id }}">Precio</label>
+            <div class="input-group">
+                <span class="input-prefix">€</span>
+                {{ form_widget(form.price, {attr: {class: 'form-input', style: ''}}) }}
+            </div>
+            {% if form.price.vars.errors|length %}
+                <div class="field-error">{{ form_errors(form.price) }}</div>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="field-label" for="{{ form.width.vars.id }}">Ancho</label>
+            <div class="input-group">
+                {{ form_widget(form.width, {attr: {class: 'form-input'}}) }}
+                <span class="input-suffix">cm</span>
+            </div>
+        </div>
+
+        <div>
+            <label class="field-label" for="{{ form.height.vars.id }}">Alto</label>
+            <div class="input-group">
+                {{ form_widget(form.height, {attr: {class: 'form-input'}}) }}
+                <span class="input-suffix">cm</span>
+            </div>
+        </div>
+
+        <div>
+            <label class="field-label" for="{{ form.depth.vars.id }}">Profundidad</label>
+            <div class="input-group">
+                {{ form_widget(form.depth, {attr: {class: 'form-input'}}) }}
+                <span class="input-suffix">cm</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Row 3: Estado ────────────────────────────────────────── #}
+<div class="card" style="margin-bottom:28px;">
+    <div class="form-section">
+        <span class="form-section-dot" style="background:var(--success);box-shadow:0 0 5px var(--success);"></span>
+        Estado del producto
+    </div>
+
+    <label style="display:flex; align-items:center; gap:14px; cursor:pointer; width:fit-content;">
+        {{ form_widget(form.isActive, {attr: {class: 'sr-only', id: 'toggle-active', style: 'position:absolute;opacity:0;width:0;height:0;'}}) }}
+        <div class="toggle-track" id="track-active">
+            <div class="toggle-thumb" id="thumb-active"></div>
+        </div>
+        <div>
+            <div class="toggle-label">Producto activo</div>
+            <div class="toggle-sub">Visible en el catálogo público</div>
+        </div>
+    </label>
+</div>
+
+{# ── Submit ───────────────────────────────────────────────── #}
+<div style="display:flex; gap:12px;">
+    <button type="submit" class="btn btn-violet" style="padding:10px 28px; font-size:14px;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            {% if mode == 'new' %}
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            {% else %}
+                <path d="M20 6L9 17l-5-5"/>
+            {% endif %}
+        </svg>
+        {{ mode == 'new' ? 'Crear producto' : 'Guardar cambios' }}
+    </button>
+    <a href="{{ path('app_admin_productos') }}" class="btn btn-cyan" style="padding:10px 20px; font-size:14px;">
+        Cancelar
+    </a>
+    {% if mode == 'edit' %}
+        <div style="margin-left:auto;">
+            <form method="post" action="{{ path('app_admin_producto_delete', {id: mueble.id}) }}"
+                  onsubmit="return confirm('¿Eliminar «{{ mueble.name|e('js') }}»?')">
+                <input type="hidden" name="_token" value="{{ csrf_token('del-' ~ mueble.id) }}">
+                <button type="submit" style="background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.3);color:var(--danger);border-radius:8px;padding:10px 18px;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .18s;"
+                        onmouseover="this.style.background='rgba(255,77,109,.18)'"
+                        onmouseout="this.style.background='rgba(255,77,109,.08)'">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                    </svg>
+                    Eliminar producto
+                </button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+{{ form_end(form) }}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    const cb    = document.getElementById('{{ form.isActive.vars.id }}');
+    const track = document.getElementById('track-active');
+    const thumb = document.getElementById('thumb-active');
+
+    function sync() {
+        const on = cb.checked;
+        track.style.background    = on ? 'rgba(0,245,255,.2)' : '';
+        track.style.borderColor   = on ? 'rgba(0,245,255,.4)' : '';
+        track.style.boxShadow     = on ? '0 0 8px rgba(0,245,255,.25)' : '';
+        thumb.style.transform     = on ? 'translateX(18px)' : '';
+        thumb.style.background    = on ? 'var(--cyan)' : '';
+    }
+    sync();
+    cb.addEventListener('change', sync);
+
+    track.parentElement.addEventListener('click', () => {
+        cb.checked = !cb.checked;
+        sync();
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: "DejaVu Sans", sans-serif;
+        background-color: #0a0a1a;
+        color: #e8eaff;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+        background: linear-gradient(135deg, #0d0d2b 0%, #12103a 100%);
+        border-bottom: 2px solid #00f5ff;
+        padding: 28px 40px 22px;
+    }
+    .header-top {
+        display: table;
+        width: 100%;
+    }
+    .header-brand {
+        display: table-cell;
+        vertical-align: middle;
+    }
+    .brand-name {
+        font-size: 22px;
+        font-weight: bold;
+        color: #00f5ff;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    .brand-tagline {
+        font-size: 10px;
+        color: #7b6fbb;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-top: 3px;
+    }
+    .header-ref {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: right;
+    }
+    .ref-label {
+        font-size: 9px;
+        color: #7b6fbb;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    .ref-number {
+        font-size: 20px;
+        font-weight: bold;
+        color: #00f5ff;
+        font-family: "DejaVu Sans Mono", monospace;
+        margin-top: 2px;
+    }
+    .ref-date {
+        font-size: 10px;
+        color: #a0a8d0;
+        margin-top: 4px;
+    }
+
+    /* ── Decorative star strip ── */
+    .star-strip {
+        background: #0a0a1a;
+        padding: 8px 40px;
+        font-size: 9px;
+        color: #2a2a5a;
+        letter-spacing: 6px;
+        border-bottom: 1px solid #1a1a3a;
+    }
+
+    /* ── Content area ── */
+    .content {
+        padding: 28px 40px;
+    }
+
+    /* ── Section card ── */
+    .section {
+        background-color: #0d0d2b;
+        border: 1px solid #1e1e4a;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .section-header {
+        background-color: #12103a;
+        border-bottom: 1px solid #1e1e4a;
+        padding: 9px 16px;
+    }
+    .section-title {
+        font-size: 9px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #00f5ff;
+    }
+    .section-body {
+        padding: 14px 16px;
+    }
+
+    /* ── Two-column row ── */
+    .row {
+        display: table;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .col {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+        padding-right: 12px;
+    }
+    .col:last-child { padding-right: 0; }
+
+    .field-label {
+        font-size: 9px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #7b6fbb;
+        margin-bottom: 3px;
+    }
+    .field-value {
+        font-size: 13px;
+        color: #e8eaff;
+        font-weight: 500;
+    }
+    .field-value.cyan {
+        color: #00f5ff;
+        font-family: "DejaVu Sans Mono", monospace;
+    }
+    .field-value.muted {
+        color: #7b6fbb;
+        font-style: italic;
+        font-size: 11px;
+    }
+
+    /* ── Product highlight ── */
+    .product-highlight {
+        background: linear-gradient(135deg, rgba(0,245,255,0.05) 0%, rgba(123,47,255,0.05) 100%);
+        border: 1px solid rgba(0,245,255,0.2);
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+    }
+    .product-name {
+        font-size: 17px;
+        font-weight: bold;
+        color: #00f5ff;
+        letter-spacing: 1px;
+    }
+    .product-celestial {
+        font-size: 11px;
+        color: #7b2fff;
+        margin-top: 3px;
+        font-style: italic;
+        letter-spacing: 1px;
+    }
+    .product-category {
+        font-size: 10px;
+        color: #7b6fbb;
+        margin-top: 5px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    /* ── Config badges ── */
+    .config-grid {
+        display: table;
+        width: 100%;
+    }
+    .config-cell {
+        display: table-cell;
+        width: 25%;
+        vertical-align: top;
+        padding-right: 10px;
+    }
+    .config-cell:last-child { padding-right: 0; }
+    .config-badge {
+        background: rgba(0,245,255,0.06);
+        border: 1px solid rgba(0,245,255,0.2);
+        border-radius: 4px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+    .config-badge-label {
+        font-size: 8px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #7b6fbb;
+        margin-bottom: 5px;
+    }
+    .config-badge-value {
+        font-size: 11px;
+        font-weight: bold;
+        color: #e8eaff;
+    }
+    .color-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2);
+        margin: 0 auto 4px;
+    }
+
+    /* ── Notes ── */
+    .notes-box {
+        background: rgba(255,255,255,0.02);
+        border-left: 3px solid #7b2fff;
+        padding: 10px 14px;
+        border-radius: 0 4px 4px 0;
+        font-size: 11px;
+        color: rgba(232,234,255,0.7);
+        font-style: italic;
+        line-height: 1.7;
+    }
+
+    /* ── Footer ── */
+    .footer {
+        margin-top: 24px;
+        border-top: 1px solid #1a1a3a;
+        padding-top: 16px;
+        display: table;
+        width: 100%;
+    }
+    .footer-left {
+        display: table-cell;
+        vertical-align: middle;
+        font-size: 9px;
+        color: #3a3a6a;
+        letter-spacing: 1px;
+    }
+    .footer-right {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: right;
+        font-size: 9px;
+        color: #3a3a6a;
+    }
+    .footer-brand {
+        font-size: 11px;
+        font-weight: bold;
+        color: #2a2a5a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    /* ── Status badge ── */
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 9px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        background: rgba(255,179,0,0.12);
+        border: 1px solid rgba(255,179,0,0.3);
+        color: #ffb300;
+    }
+</style>
+</head>
+<body>
+
+{% set modelo_names = {
+    'standard2': 'Nebula Seraph II',
+    'standard3': 'Galaxia Andrómeda III',
+    'chaise':    'Estrella Polar Chaise',
+    'corner':    'Constelación Orión'
+} %}
+{% set tapiceria_labels = {'tela':'Tela','piel':'Piel Genuina','terciopelo':'Terciopelo'} %}
+{% set patas_labels = {'natural':'Madera Natural','dark':'Madera Oscura','metal-black':'Metal Negro','metal-gold':'Metal Dorado'} %}
+{% set modelo_labels = {'standard2':'Sofá 2 Plazas','standard3':'Sofá 3 Plazas','chaise':'Chaise Longue','corner':'Rinconera'} %}
+
+{% set celestial_name = presupuesto.configuracionModelo ? (modelo_names[presupuesto.configuracionModelo] ?? presupuesto.configuracionModelo) : null %}
+
+{# ── Header ── #}
+<div class="header">
+    <div class="header-top">
+        <div class="header-brand">
+            <div class="brand-name">★ Nuevas Tendencias</div>
+            <div class="brand-tagline">Showroom Virtual · Colección Estelar</div>
+        </div>
+        <div class="header-ref">
+            <div class="ref-label">Solicitud de presupuesto</div>
+            <div class="ref-number">#{{ '%05d'|format(presupuesto.id) }}</div>
+            <div class="ref-date">{{ presupuesto.createdAt|date('d/m/Y · H:i') }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="star-strip">
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+</div>
+
+<div class="content">
+
+    {# ── Product ── #}
+    {% if presupuesto.mueble or celestial_name %}
+    <div class="product-highlight">
+        {% if presupuesto.mueble %}
+        <div class="product-name">{{ presupuesto.mueble.name }}</div>
+        {% if presupuesto.mueble.category %}
+        <div class="product-category">{{ presupuesto.mueble.category.name }}</div>
+        {% endif %}
+        {% endif %}
+        {% if celestial_name %}
+        <div class="product-celestial">✦ {{ celestial_name }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── Configuration ── #}
+    {% if presupuesto.configuracionModelo or presupuesto.configuracionTapiceria or presupuesto.configuracionColor or presupuesto.configuracionPatas %}
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">✦ Configuración del sofá</span>
+        </div>
+        <div class="section-body">
+            <div class="config-grid">
+                {% if presupuesto.configuracionModelo %}
+                <div class="config-cell">
+                    <div class="config-badge">
+                        <div class="config-badge-label">Modelo</div>
+                        <div class="config-badge-value">{{ modelo_labels[presupuesto.configuracionModelo] ?? presupuesto.configuracionModelo }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if presupuesto.configuracionTapiceria %}
+                <div class="config-cell">
+                    <div class="config-badge">
+                        <div class="config-badge-label">Tapicería</div>
+                        <div class="config-badge-value">{{ tapiceria_labels[presupuesto.configuracionTapiceria] ?? presupuesto.configuracionTapiceria }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if presupuesto.configuracionColor %}
+                <div class="config-cell">
+                    <div class="config-badge">
+                        <div class="config-badge-label">Color</div>
+                        <div class="color-dot" style="background:{{ presupuesto.configuracionColor }};"></div>
+                        <div class="config-badge-value" style="font-size:9px; font-family:monospace;">{{ presupuesto.configuracionColor }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if presupuesto.configuracionPatas %}
+                <div class="config-cell">
+                    <div class="config-badge">
+                        <div class="config-badge-label">Patas</div>
+                        <div class="config-badge-value" style="font-size:10px;">{{ patas_labels[presupuesto.configuracionPatas] ?? presupuesto.configuracionPatas }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if presupuesto.selectedVariation %}
+            <div style="margin-top:12px; padding-top:12px; border-top:1px solid #1e1e4a;">
+                <div class="field-label">SKU de variación seleccionada</div>
+                <div class="field-value cyan">{{ presupuesto.selectedVariation.sku }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Client data ── #}
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">◎ Datos del cliente</span>
+        </div>
+        <div class="section-body">
+            <div class="row">
+                <div class="col">
+                    <div class="field-label">Nombre</div>
+                    <div class="field-value">{{ presupuesto.customerName }}</div>
+                </div>
+                <div class="col">
+                    <div class="field-label">Email</div>
+                    <div class="field-value" style="font-size:11px;">{{ presupuesto.customerEmail }}</div>
+                </div>
+            </div>
+            {% if presupuesto.customerPhone %}
+            <div class="row">
+                <div class="col">
+                    <div class="field-label">Teléfono</div>
+                    <div class="field-value">{{ presupuesto.customerPhone }}</div>
+                </div>
+                <div class="col"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Notes ── #}
+    {% if presupuesto.notes %}
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">✎ Notas del cliente</span>
+        </div>
+        <div class="section-body">
+            <div class="notes-box">{{ presupuesto.notes }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Summary row ── #}
+    <div class="section">
+        <div class="section-header">
+            <span class="section-title">◈ Resumen de la solicitud</span>
+        </div>
+        <div class="section-body">
+            <div class="row">
+                <div class="col">
+                    <div class="field-label">Referencia</div>
+                    <div class="field-value cyan">#{{ '%05d'|format(presupuesto.id) }}</div>
+                </div>
+                <div class="col">
+                    <div class="field-label">Estado actual</div>
+                    <div style="margin-top:2px;">
+                        <span class="status-badge">Pendiente de respuesta</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="field-label">Fecha de solicitud</div>
+                    <div class="field-value">{{ presupuesto.createdAt|date('d/m/Y') }}</div>
+                </div>
+                <div class="col">
+                    <div class="field-label">Hora</div>
+                    <div class="field-value">{{ presupuesto.createdAt|date('H:i') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Footer ── #}
+    <div class="footer">
+        <div class="footer-left">
+            Este documento es un resumen de solicitud de presupuesto.<br>
+            No constituye un contrato ni una oferta vinculante.
+        </div>
+        <div class="footer-right">
+            <div class="footer-brand">★ Nuevas Tendencias</div>
+            <div style="margin-top:3px;">Generado el {{ "now"|date('d/m/Y H:i') }}</div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Bienvenido al Panel de Control{% endblock %}
+
+{% block main %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card card-body border-left-primary">
+                <h4>Catálogo</h4>
+                <p>Tienes registrados <strong>{{ total_muebles }}</strong> muebles.</p>
+                <a href="{{ ea_url().setController('App\\Controller\\Admin\\MuebleCrudController') }}" class="btn btn-primary">Gestionar Muebles</a>
+            </div>
+        </div>
+        {# Aquí podrías añadir más tarjetas con estadísticas #}
+    </div>
+{% endblock %}

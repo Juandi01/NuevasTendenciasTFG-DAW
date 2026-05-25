@@ -1,0 +1,148 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Crear cuenta · Nuevas Tendencias{% endblock %}
+
+{% block stylesheets %}
+<style>
+.auth-wrap {
+    min-height: calc(100vh - 72px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+.auth-card {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: #0e0e2e;
+    border: 1px solid #1e1e4a;
+    border-radius: 20px;
+    padding: 48px 40px;
+    box-shadow: 0 0 60px rgba(123,47,255,.12), 0 0 30px rgba(0,245,255,.06);
+}
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 15%; right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, #00f5ff, #7b2fff);
+    border-radius: 0 0 4px 4px;
+}
+.auth-icon {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #00f5ff 0%, #7b2fff 100%);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 28px rgba(0,245,255,.4);
+}
+.auth-title { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.auth-sub   { text-align: center; color: #6b6b9a; font-size: 13px; margin-bottom: 32px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.auth-field { margin-bottom: 16px; }
+.auth-field label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: #6b6b9a; margin-bottom: 7px;
+}
+.auth-field input {
+    width: 100%;
+    background: rgba(255,255,255,.04);
+    border: 1px solid #1e1e4a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px; color: #dde1ff;
+    font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+}
+.auth-field input:focus {
+    outline: none;
+    border-color: rgba(0,245,255,.5);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.08);
+}
+.auth-field input::placeholder { color: #6b6b9a; }
+.field-errors { list-style: none; margin-top: 5px; }
+.field-errors li { font-size: 12px; color: #ff4d6d; }
+.btn-auth {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #00f5ff -20%, #7b2fff 120%);
+    border: none; border-radius: 10px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(123,47,255,.35);
+    transition: box-shadow .2s;
+    margin-top: 8px;
+}
+.btn-auth:hover { box-shadow: 0 4px 30px rgba(0,245,255,.35), 0 4px 20px rgba(123,47,255,.4); }
+.auth-footer {
+    margin-top: 24px; text-align: center;
+    font-size: 13px; color: #6b6b9a;
+}
+.auth-footer a { color: #00f5ff; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-icon">🚀</div>
+    <h1 class="auth-title">Únete al universo</h1>
+    <p class="auth-sub">Crea tu cuenta en Nuevas Tendencias</p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+      <div class="row-2">
+        <div class="auth-field">
+          {{ form_label(form.nombre) }}
+          {{ form_widget(form.nombre, {attr: {placeholder: 'Nombre'}}) }}
+          {{ form_errors(form.nombre) }}
+        </div>
+        <div class="auth-field">
+          {{ form_label(form.apellidos) }}
+          {{ form_widget(form.apellidos, {attr: {placeholder: 'Apellidos'}}) }}
+          {{ form_errors(form.apellidos) }}
+        </div>
+      </div>
+
+      <div class="auth-field">
+        {{ form_label(form.email) }}
+        {{ form_widget(form.email, {attr: {placeholder: 'tu@email.com'}}) }}
+        {{ form_errors(form.email) }}
+      </div>
+
+      <div class="auth-field">
+        {{ form_label(form.telefono) }}
+        {{ form_widget(form.telefono, {attr: {placeholder: '+34 600 000 000'}}) }}
+        {{ form_errors(form.telefono) }}
+      </div>
+
+      <div class="auth-field">
+        {{ form_label(form.plainPassword.first) }}
+        {{ form_widget(form.plainPassword.first, {attr: {placeholder: 'Mínimo 8 caracteres'}}) }}
+        {{ form_errors(form.plainPassword.first) }}
+      </div>
+
+      <div class="auth-field">
+        {{ form_label(form.plainPassword.second) }}
+        {{ form_widget(form.plainPassword.second, {attr: {placeholder: 'Repite la contraseña'}}) }}
+        {{ form_errors(form.plainPassword.second) }}
+        {{ form_errors(form.plainPassword) }}
+      </div>
+
+      {{ form_errors(form) }}
+
+      <button type="submit" class="btn-auth">Crear cuenta →</button>
+
+    {{ form_end(form) }}
+
+    <div class="auth-footer">
+      ¿Ya tienes cuenta? <a href="{{ path('app_login') }}">Inicia sesión</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

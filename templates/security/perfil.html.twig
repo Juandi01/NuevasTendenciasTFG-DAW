@@ -1,0 +1,192 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mi perfil · Nuevas Tendencias{% endblock %}
+
+{% block stylesheets %}
+<style>
+.perfil-hero {
+    background: linear-gradient(135deg, rgba(123,47,255,.15) 0%, rgba(0,245,255,.08) 100%);
+    border-bottom: 1px solid #1e1e4a;
+    padding: 48px 0 40px;
+}
+.perfil-hero-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; gap: 28px;
+}
+.perfil-avatar {
+    width: 80px; height: 80px; flex-shrink: 0;
+    background: linear-gradient(135deg, #7b2fff, #00f5ff);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 0 30px rgba(123,47,255,.5);
+}
+.perfil-name { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.perfil-email { color: #6b6b9a; font-size: 14px; }
+.perfil-badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: .06em; text-transform: uppercase;
+}
+.badge-admin { background: rgba(123,47,255,.2); color: #a46fff; border: 1px solid rgba(123,47,255,.3); }
+.badge-user  { background: rgba(0,245,255,.1);  color: #00f5ff;  border: 1px solid rgba(0,245,255,.2); }
+
+.perfil-body { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+.section-title {
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, #1e1e4a, transparent);
+}
+
+/* Presupuestos table */
+.pres-table { width: 100%; border-collapse: collapse; }
+.pres-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: #6b6b9a; padding: 10px 14px;
+    border-bottom: 1px solid #1e1e4a;
+}
+.pres-table td {
+    padding: 14px 14px;
+    border-bottom: 1px solid rgba(30,30,74,.5);
+    font-size: 14px; color: #dde1ff;
+    vertical-align: middle;
+}
+.pres-table tr:hover td { background: rgba(255,255,255,.02); }
+.estado-badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase;
+}
+.estado-pendiente  { background: rgba(255,165,0,.12);  color: #ffa500; border: 1px solid rgba(255,165,0,.25); }
+.estado-en_proceso { background: rgba(0,245,255,.1);   color: #00f5ff; border: 1px solid rgba(0,245,255,.2); }
+.estado-respondido { background: rgba(0,200,100,.1);   color: #00c864; border: 1px solid rgba(0,200,100,.2); }
+
+/* Reviews grid */
+.reviews-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.review-card {
+    background: #0e0e2e; border: 1px solid #1e1e4a;
+    border-radius: 14px; padding: 20px;
+}
+.review-stars { color: #ffa500; font-size: 16px; margin-bottom: 8px; }
+.review-mueble { font-size: 12px; color: #6b6b9a; margin-bottom: 8px; }
+.review-comment { font-size: 14px; color: #dde1ff; line-height: 1.5; }
+.review-sentiment {
+    display: inline-block; margin-top: 10px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 10px;
+}
+.sentiment-Positivo { background: rgba(0,200,100,.1); color: #00c864; }
+.sentiment-Negativo { background: rgba(255,77,109,.1); color: #ff4d6d; }
+.sentiment-Neutro   { background: rgba(200,200,255,.08); color: #a0a0d0; }
+
+.empty-state {
+    text-align: center; padding: 40px 20px;
+    color: #6b6b9a; font-size: 14px;
+}
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="perfil-hero">
+  <div class="perfil-hero-inner">
+    <div class="perfil-avatar">👤</div>
+    <div>
+      <div class="perfil-name">{{ user.nombreCompleto }}</div>
+      <div class="perfil-email">{{ user.email }}{% if user.telefono %} · {{ user.telefono }}{% endif %}</div>
+      <div class="perfil-badges">
+        {% if 'ROLE_ADMIN' in user.roles %}
+          <span class="badge badge-admin">Admin</span>
+        {% endif %}
+        <span class="badge badge-user">Usuario</span>
+      </div>
+    </div>
+    <div style="margin-left:auto;">
+      <a href="{{ path('app_logout') }}"
+         style="font-size:13px;color:#6b6b9a;text-decoration:none;border:1px solid #1e1e4a;padding:8px 16px;border-radius:8px;transition:all .2s;"
+         onmouseover="this.style.color='#ff4d6d';this.style.borderColor='rgba(255,77,109,.3)'"
+         onmouseout="this.style.color='#6b6b9a';this.style.borderColor='#1e1e4a'">
+        Cerrar sesión
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="perfil-body">
+
+  {# ── Presupuestos ── #}
+  <h2 class="section-title">Mis presupuestos</h2>
+
+  {% if presupuestos is empty %}
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      Aún no has solicitado ningún presupuesto.
+      <br><a href="{{ path('app_home') }}" style="color:#00f5ff;text-decoration:none;">Explorar catálogo →</a>
+    </div>
+  {% else %}
+    <div style="overflow-x:auto;margin-bottom:48px;">
+      <table class="pres-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Producto</th>
+            <th>Configuración</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in presupuestos %}
+          <tr>
+            <td style="color:#6b6b9a;">{{ p.id }}</td>
+            <td>{{ p.mueble ? p.mueble.name : '—' }}</td>
+            <td style="color:#6b6b9a;font-size:12px;">
+              {% if p.configuracionModelo %}{{ p.configuracionModelo }}{% endif %}
+              {% if p.configuracionTapiceria %} · {{ p.configuracionTapiceria }}{% endif %}
+              {% if p.configuracionColor %}
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ p.configuracionColor }};vertical-align:middle;margin-left:4px;"></span>
+              {% endif %}
+            </td>
+            <td style="color:#6b6b9a;">{{ p.createdAt|date('d/m/Y') }}</td>
+            <td>
+              <span class="estado-badge estado-{{ p.estado.value }}">{{ p.estado.value|replace({'_': ' '}) }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {# ── Reseñas ── #}
+  <h2 class="section-title">Mis reseñas</h2>
+
+  {% if reviews is empty %}
+    <div class="empty-state">
+      <div class="icon">⭐</div>
+      Aún no has escrito ninguna reseña.
+    </div>
+  {% else %}
+    <div class="reviews-grid">
+      {% for r in reviews %}
+        <div class="review-card">
+          <div class="review-stars">
+            {% for i in 1..5 %}{{ i <= r.rating ? '★' : '☆' }}{% endfor %}
+          </div>
+          <div class="review-mueble">{{ r.mueble ? r.mueble.name : 'Producto eliminado' }}</div>
+          <div class="review-comment">{{ r.comment }}</div>
+          {% if r.sentimentAi %}
+            <span class="review-sentiment sentiment-{{ r.sentimentAi }}">{{ r.sentimentAi }}</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+<div id="media-mdl-{{ model.id }}" class="model-row">
+    <div class="model-row-icon">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+    </div>
+    <div class="model-row-info">
+        <div class="model-row-name">{{ model.displayName }}</div>
+        <div class="model-row-meta">
+            {{ model.modelName|split('.')|last|upper }}
+            {% if model.modelSize %} · {{ (model.modelSize / 1024)|round(0) }} KB{% endif %}
+        </div>
+    </div>
+    <button class="btn-icon btn-cyan-sm"
+            data-action="click->model-viewer#open"
+            data-model-viewer-url-param="{{ '/uploads/models/' ~ model.modelName }}"
+            data-model-viewer-name-param="{{ model.displayName }}"
+            title="Previsualizar en 3D">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span style="font-size:11px;">Vista 3D</span>
+    </button>
+    <form method="post" action="{{ path('app_admin_media_model_delete', {id: model.id}) }}"
+          onsubmit="return confirm('¿Eliminar «{{ model.displayName|e('js') }}»?')" style="margin:0;">
+        <input type="hidden" name="_token" value="{{ csrf_token('del-mdl-' ~ model.id) }}">
+        <button type="submit" class="btn-icon btn-danger" title="Eliminar">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+    </form>
+</div>

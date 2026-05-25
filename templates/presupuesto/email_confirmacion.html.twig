@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu solicitud de presupuesto — Nuevas Tendencias</title>
+</head>
+<body style="margin:0;padding:0;background-color:#07071a;font-family:Arial,Helvetica,sans-serif;color:#e8eaff;">
+
+{% set modelo_labels    = {'standard2':'Sofá 2 Plazas','standard3':'Sofá 3 Plazas','chaise':'Chaise Longue','corner':'Rinconera'} %}
+{% set tapiceria_labels = {'tela':'Tela','piel':'Piel Genuina','terciopelo':'Terciopelo'} %}
+{% set patas_labels     = {'natural':'Madera Natural','dark':'Madera Oscura','metal-black':'Metal Negro','metal-gold':'Metal Dorado'} %}
+
+{# ── Outer wrapper ── #}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#07071a;">
+<tr><td align="center" style="padding:32px 16px;">
+
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+  {# ══ HEADER ══ #}
+  <tr>
+    <td style="background:linear-gradient(135deg,#0d0d2b 0%,#12103a 100%);border-bottom:2px solid #00f5ff;border-radius:12px 12px 0 0;padding:32px 40px 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <div style="font-size:26px;font-weight:700;letter-spacing:3px;color:#00f5ff;">
+              SOFA<span style="color:#7b2fff;">SMART</span>
+            </div>
+            <div style="font-size:10px;color:#6b6b9a;letter-spacing:3px;text-transform:uppercase;margin-top:4px;">
+              Showroom Virtual · Colección Estelar
+            </div>
+          </td>
+          <td align="right" style="vertical-align:top;">
+            <div style="font-size:9px;color:#6b6b9a;letter-spacing:2px;text-transform:uppercase;">Solicitud</div>
+            <div style="font-size:22px;font-weight:700;color:#00f5ff;font-family:monospace;">#{{ '%05d'|format(presupuesto.id) }}</div>
+            <div style="font-size:10px;color:#a0a8d0;margin-top:2px;">{{ presupuesto.createdAt|date('d/m/Y · H:i') }}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {# ── Star strip ── #}
+  <tr>
+    <td style="background:#0a0a1a;padding:6px 40px;font-size:9px;color:#1e1e4a;letter-spacing:8px;border-bottom:1px solid #13133a;">
+      · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+    </td>
+  </tr>
+
+  {# ══ HERO ══ #}
+  <tr>
+    <td style="background:#0a0a1a;padding:36px 40px 24px;text-align:center;">
+      <div style="font-size:28px;margin-bottom:8px;">🚀</div>
+      <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#00f5ff;letter-spacing:1px;">
+        ¡Solicitud recibida con éxito!
+      </h1>
+      <p style="margin:0;font-size:15px;color:#b0b0d0;line-height:1.6;">
+        Hola, <strong style="color:#e8eaff;">{{ presupuesto.customerName }}</strong>.
+        Tu configuración ha sido registrada en nuestro sistema estelar.<br>
+        El adjunto PDF incluye el resumen completo de tu solicitud.
+      </p>
+    </td>
+  </tr>
+
+  {# ══ PRODUCT NAME ══ #}
+  {% if presupuesto.mueble %}
+  <tr>
+    <td style="background:#0a0a1a;padding:0 40px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="background:linear-gradient(135deg,rgba(0,245,255,0.06) 0%,rgba(123,47,255,0.06) 100%);border:1px solid rgba(0,245,255,0.2);border-radius:8px;padding:16px 20px;">
+            <div style="font-size:10px;color:#6b6b9a;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Producto</div>
+            <div style="font-size:19px;font-weight:700;color:#00f5ff;letter-spacing:1px;">{{ presupuesto.mueble.name }}</div>
+            {% if presupuesto.mueble.category %}
+            <div style="font-size:10px;color:#7b2fff;margin-top:4px;letter-spacing:1px;text-transform:uppercase;">{{ presupuesto.mueble.category.name }}</div>
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+
+  {# ══ CONFIG GRID ══ #}
+  {% if presupuesto.configuracionModelo or presupuesto.configuracionTapiceria or presupuesto.configuracionColor or presupuesto.configuracionPatas %}
+  <tr>
+    <td style="background:#0a0a1a;padding:0 40px 24px;">
+
+      {# Section title #}
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00f5ff;border-bottom:1px solid rgba(0,245,255,0.15);padding-bottom:8px;margin-bottom:16px;">
+        ✦ Tu configuración
+      </div>
+
+      {# 4-col badge row #}
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+
+          {% if presupuesto.configuracionModelo %}
+          <td width="25%" style="padding-right:8px;vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.18);border-radius:6px;padding:12px 8px;text-align:center;">
+                <div style="font-size:18px;margin-bottom:6px;">🛋️</div>
+                <div style="font-size:8px;color:#6b6b9a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Modelo</div>
+                <div style="font-size:11px;font-weight:700;color:#e8eaff;">{{ modelo_labels[presupuesto.configuracionModelo] ?? presupuesto.configuracionModelo|capitalize }}</div>
+              </td></tr>
+            </table>
+          </td>
+          {% endif %}
+
+          {% if presupuesto.configuracionTapiceria %}
+          <td width="25%" style="padding-right:8px;vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.18);border-radius:6px;padding:12px 8px;text-align:center;">
+                <div style="font-size:18px;margin-bottom:6px;">🪡</div>
+                <div style="font-size:8px;color:#6b6b9a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Tapicería</div>
+                <div style="font-size:11px;font-weight:700;color:#e8eaff;">{{ tapiceria_labels[presupuesto.configuracionTapiceria] ?? presupuesto.configuracionTapiceria|capitalize }}</div>
+              </td></tr>
+            </table>
+          </td>
+          {% endif %}
+
+          {% if presupuesto.configuracionColor %}
+          <td width="25%" style="padding-right:8px;vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.18);border-radius:6px;padding:12px 8px;text-align:center;">
+                <div style="width:24px;height:24px;border-radius:50%;background:{{ presupuesto.configuracionColor }};border:2px solid rgba(255,255,255,0.25);margin:0 auto 6px;"></div>
+                <div style="font-size:8px;color:#6b6b9a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Color</div>
+                <div style="font-size:10px;font-weight:700;color:#e8eaff;font-family:monospace;">{{ presupuesto.configuracionColor|upper }}</div>
+              </td></tr>
+            </table>
+          </td>
+          {% endif %}
+
+          {% if presupuesto.configuracionPatas %}
+          <td width="25%" style="vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.18);border-radius:6px;padding:12px 8px;text-align:center;">
+                <div style="font-size:18px;margin-bottom:6px;">🦵</div>
+                <div style="font-size:8px;color:#6b6b9a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Patas</div>
+                <div style="font-size:11px;font-weight:700;color:#e8eaff;">{{ patas_labels[presupuesto.configuracionPatas] ?? presupuesto.configuracionPatas|replace({'_':' '})|capitalize }}</div>
+              </td></tr>
+            </table>
+          </td>
+          {% endif %}
+
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+  {% endif %}
+
+  {# ══ EXTRA DETAILS ══ #}
+  {% if presupuesto.customerPhone or presupuesto.notes %}
+  <tr>
+    <td style="background:#0a0a1a;padding:0 40px 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0d0d2b;border:1px solid #1e1e4a;border-radius:8px;">
+        {% if presupuesto.customerPhone %}
+        <tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #1e1e4a;">
+            <span style="font-size:9px;color:#6b6b9a;text-transform:uppercase;letter-spacing:1.5px;">Teléfono</span>
+            <span style="font-size:14px;color:#e8eaff;font-weight:600;margin-left:12px;">{{ presupuesto.customerPhone }}</span>
+          </td>
+        </tr>
+        {% endif %}
+        {% if presupuesto.notes %}
+        <tr>
+          <td style="padding:12px 16px;">
+            <div style="font-size:9px;color:#6b6b9a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">Notas</div>
+            <div style="font-size:13px;color:rgba(232,234,255,0.75);font-style:italic;line-height:1.6;border-left:3px solid #7b2fff;padding-left:12px;">{{ presupuesto.notes }}</div>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+
+  {# ══ MESSAGE BOX ══ #}
+  <tr>
+    <td style="background:#0a0a1a;padding:0 40px 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="background:rgba(123,47,255,0.1);border:1px solid rgba(123,47,255,0.3);border-radius:10px;padding:20px 24px;">
+            <p style="margin:0;font-size:14px;color:#c0b0ff;line-height:1.8;">
+              Nuestro equipo de <strong style="color:#00f5ff;">exploradores espaciales del diseño</strong>
+              revisará tu configuración y se pondrá en contacto contigo en un plazo de
+              <strong style="color:#00f5ff;">24–48 horas</strong> para ofrecerte el mejor presupuesto personalizado.
+            </p>
+            <p style="margin:14px 0 0;font-size:14px;color:#c0b0ff;line-height:1.8;">
+              Si tienes cualquier duda, puedes responder a este correo o contactarnos directamente.
+              <br>¡Gracias por viajar con Nuevas Tendencias! 🌟
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {# ══ PDF NOTE ══ #}
+  <tr>
+    <td style="background:#0a0a1a;padding:0 40px 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.15);border-radius:8px;padding:14px 20px;">
+            <span style="font-size:18px;vertical-align:middle;margin-right:8px;">📎</span>
+            <span style="font-size:13px;color:#a0d8ff;vertical-align:middle;">
+              Se adjunta el <strong>PDF con el resumen completo</strong> de tu solicitud para que lo guardes.
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {# ══ FOOTER ══ #}
+  <tr>
+    <td style="background:#06060f;border-top:1px solid #13133a;border-radius:0 0 12px 12px;padding:24px 40px;text-align:center;">
+      <div style="font-size:18px;letter-spacing:6px;color:#2a2a5a;margin-bottom:8px;">✦ · ✦ · ✦</div>
+      <div style="font-size:14px;font-weight:700;color:#2a2a5a;letter-spacing:3px;margin-bottom:6px;">SOFASMART</div>
+      <div style="font-size:11px;color:#3a3a6a;line-height:1.8;">
+        Showroom Virtual de Sofás — Colección Estelar<br>
+        Este correo fue generado automáticamente. Referencia: <span style="font-family:monospace;">#{{ '%05d'|format(presupuesto.id) }}</span>
+      </div>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+
+</body>
+</html>
