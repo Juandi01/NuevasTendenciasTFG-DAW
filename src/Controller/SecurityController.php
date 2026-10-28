@@ -2,24 +2,19 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Form\RegistrationFormType;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    // Formulario de login exclusivo para administradores.
+    #[Route('/admin/login', name: 'app_admin_login')]
+    public function adminLogin(AuthenticationUtils $authenticationUtils): Response
     {
-        if ($this->getUser()) {
-            return $this->redirectToRoute('app_home');
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('app_admin_dashboard');
         }
 
         return $this->render('security/login.html.twig', [
@@ -28,49 +23,23 @@ class SecurityController extends AbstractController
         ]);
     }
 
+    // Ruta legacy /login — redirigida permanentemente al home público.
+    #[Route('/login', name: 'app_login')]
+    public function login(): Response
+    {
+        return $this->redirect($this->generateUrl('app_home'), Response::HTTP_MOVED_PERMANENTLY);
+    }
+
     #[Route('/logout', name: 'app_logout')]
     public function logout(): void
     {
         // Symfony intercepta esta ruta automáticamente.
     }
 
+    // Ruta legacy /registro — redirigida permanentemente al home público.
     #[Route('/registro', name: 'app_register')]
-    public function register(
-        Request $request,
-        UserPasswordHasherInterface $hasher,
-        EntityManagerInterface $em,
-    ): Response {
-        if ($this->getUser()) {
-            return $this->redirectToRoute('app_home');
-        }
-
-        $user = new User();
-        $form = $this->createForm(RegistrationFormType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($hasher->hashPassword($user, $form->get('plainPassword')->getData()));
-            $em->persist($user);
-            $em->flush();
-
-            $this->addFlash('success', '¡Bienvenido al universo Nuevas Tendencias! Ya puedes iniciar sesión.');
-            return $this->redirectToRoute('app_login');
-        }
-
-        return $this->render('security/register.html.twig', ['form' => $form]);
-    }
-
-    #[Route('/perfil', name: 'app_perfil')]
-    #[IsGranted('ROLE_USER')]
-    public function perfil(): Response
+    public function register(): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        return $this->render('security/perfil.html.twig', [
-            'user'         => $user,
-            'presupuestos' => $user->getPresupuestos(),
-            'reviews'      => $user->getReviews(),
-        ]);
+        return $this->redirect($this->generateUrl('app_home'), Response::HTTP_MOVED_PERMANENTLY);
     }
 }

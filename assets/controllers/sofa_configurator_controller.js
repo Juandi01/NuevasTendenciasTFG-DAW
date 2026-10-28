@@ -139,15 +139,26 @@ const PROC_MODELS = {
 
 // Named products — wizard Step 1 + GLB loading
 const PRODUCTS = {
-    orion:     { label: 'Orión',     celestial: 'Constelación Orión',   type: 'Sofá 3 plazas',  icon: '🛋️', glb: 'orion',        proc: 'standard3', camZ: 5.5, camY: 1.8, lookY: 0.55, lookZ: 0    },
+    orion:     { label: 'Orión',     celestial: 'Constelación Orión',   type: 'Sofá 3 plazas',  icon: '🛋️', glb: 'modern__sofa', proc: 'standard3', camZ: 5.5, camY: 1.8, lookY: 0.55, lookZ: 0    },
     sirio:     { label: 'Sirio',     celestial: 'Estrella Sirio',        type: 'Sofá 3 plazas',  icon: '🛋️', glb: 'sirio',        proc: 'standard3', camZ: 5.5, camY: 1.8, lookY: 0.55, lookZ: 0    },
-    vega:      { label: 'Vega',      celestial: 'Estrella Vega',         type: 'Sofá 2 plazas',  icon: '🛋️', glb: 'vega',         proc: 'standard2', camZ: 4.8, camY: 1.7, lookY: 0.55, lookZ: 0    },
+    vega:      { label: 'Vega',      celestial: 'Estrella Vega',         type: 'Sofá 2 plazas',  icon: '🛋️', glb: 'modern__sofa', proc: 'standard2', camZ: 4.8, camY: 1.7, lookY: 0.55, lookZ: 0    },
     andromeda: { label: 'Andrómeda', celestial: 'Galaxia Andrómeda',     type: 'Rinconera izq.', icon: '🔲', glb: 'andromeda',    proc: 'corner',    camZ: 6.5, camY: 2.5, lookY: 0.55, lookZ: 0.55 },
     cassiopea: { label: 'Cassiopea', celestial: 'Constelación Casiopea', type: 'Rinconera der.', icon: '🔲', glb: 'cassiopea',    proc: 'corner',    camZ: 6.5, camY: 2.5, lookY: 0.55, lookZ: 0.55 },
-    nebula:    { label: 'Nebula',    celestial: 'Nebulosa Cefálica',     type: 'Rinconera',      icon: '🔲', glb: 'nebula',       proc: 'corner',    camZ: 6.5, camY: 2.5, lookY: 0.55, lookZ: 0.55 },
+    nebula:    { label: 'Nebula',    celestial: 'Nebulosa Cefálica',     type: 'Rinconera',      icon: '🔲', glb: 'nebula',       proc: 'corner',    camZ: 6.5, camY: 2.5, lookY: 0.55, lookZ: 0.55, rotY: Math.PI },
     altair:    { label: 'Altair',    celestial: 'Estrella Altair',       type: 'Chaise longue',  icon: '🛁', glb: 'orion-chaise', proc: 'chaise',    camZ: 5.8, camY: 1.9, lookY: 0.50, lookZ: 0.40 },
     lyra:      { label: 'Lyra',      celestial: 'Constelación Lyra',     type: 'Chaise longue',  icon: '🛁', glb: 'lyra',         proc: 'chaise',    camZ: 5.8, camY: 1.9, lookY: 0.50, lookZ: 0.40 },
-    perseo:    { label: 'Perseo',    celestial: 'Constelación Perseo',   type: 'Chaise longue',  icon: '🛁', glb: null,           proc: 'chaise',    camZ: 5.8, camY: 1.9, lookY: 0.50, lookZ: 0.40 },
+    perseo:    { label: 'Perseo',    celestial: 'Constelación Perseo',   type: 'Chaise longue',  icon: '🛁', glb: 'perseo',       proc: 'chaise',    camZ: 5.8, camY: 1.9, lookY: 0.50, lookZ: 0.40 },
+};
+
+// Type + seats → product key
+const MODEL_MAP = {
+    'sofa-2':      'vega',
+    'sofa-3':      'orion',
+    'sofa-4':      'orion',
+    'rinconera-3': 'andromeda',
+    'rinconera-4': 'cassiopea',
+    'chaise-2':    'lyra',
+    'chaise-3':    'altair',
 };
 
 // MeshPhysicalMaterial presets per upholstery type.
@@ -188,7 +199,7 @@ const LEGS = {
 };
 
 const STEPS = [
-    { title: 'Tu modelo',  sub: 'Elige el tipo de sofá que se adapta a tu espacio' },
+    { title: 'Tipo de sofá', sub: 'Elige la forma que mejor se adapta a tu espacio' },
     { title: 'Tapicería',  sub: 'Selecciona el material que más se ajusta a tu estilo' },
     { title: 'Color',      sub: 'Personaliza el color de la tapicería' },
     { title: 'Patas',      sub: 'El toque final — elige el acabado de las patas' },
@@ -202,11 +213,16 @@ export default class extends Controller {
         'selCard', 'summaryModel', 'summaryUpholstery', 'summaryColor', 'summaryLegs',
     ];
     static values = {
-        step:       { type: Number, default: 1 },
-        model:      { type: String, default: 'orion' },
-        upholstery: { type: String, default: 'tela' },
-        color:      { type: String, default: '#c4a882' },
-        legs:       { type: String, default: 'natural' },
+        step:        { type: Number,  default: 1 },
+        sofaType:    { type: String,  default: 'sofa' },
+        sofaSeats:   { type: String,  default: '3' },
+        model:       { type: String,  default: 'sirio' },
+        upholstery:  { type: String,  default: 'tela' },
+        color:       { type: String,  default: '#c4a882' },
+        legs:        { type: String,  default: 'natural' },
+        baseUrl:     { type: String,  default: '/' },
+        locked:      { type: Boolean, default: false },
+        productName: { type: String,  default: '' },
     };
 
     // Three.js private state
@@ -214,20 +230,22 @@ export default class extends Controller {
     #matFabric; #matCushion; #matLegs; #matFrame;
     #clock; #bumpFabric; #bumpLeather;
     #rafId; #resizeObserver;
+    #composer;                         // EffectComposer for post-processing
 
     // Immersive extras
     #particles; #particles2;          // star dust systems
     #pointLight; #pointLightAngle = 0; // orbiting warm spotlight
-    #floorLight;                       // neon floor bounce
     #tooltip;                          // DOM tooltip el
     #spinnerEl;                        // loading overlay
     #raycaster = new THREE.Raycaster();
     #mouseNDC  = new THREE.Vector2(-99, -99); // far off-screen initially
     #groupFadeIn = 1;                  // 0→1 fade when model changes
 
+    #step1Phase = 1;                   // 1 = type selection · 2 = seats selection
+
     // Smooth camera transition targets
-    #camTgtPos  = new THREE.Vector3(0, 1.7, 4.8);
-    #camTgtLook = new THREE.Vector3(0, 0.55, 0);
+    #camTgtPos  = new THREE.Vector3(0, 1.2, 5.0);
+    #camTgtLook = new THREE.Vector3(0, 0.80, 0);
     #camTransitioning = false;         // true only while lerping to new model camera pos
 
     // Current lerped color multiplier (tracks #tgt.colorMult for smooth transitions)
@@ -247,7 +265,16 @@ export default class extends Controller {
     };
 
     connect() {
-        this.#clock = new THREE.Clock();
+        this.#clock = new THREE.Timer();
+        // DOM-only work runs immediately (value callbacks may already have fired)
+        this.#syncAllHighlights();
+        // Defer Three.js init until after the browser has resolved the canvas layout.
+        // In Docker/prod, compiled assets arrive faster and Stimulus can fire before
+        // the first paint; deferring one rAF guarantees clientWidth/clientHeight are set.
+        requestAnimationFrame(() => this.#initThree());
+    }
+
+    #initThree() {
         this.#initRenderer();
         this.#initScene();
         this.#initMaterials();
@@ -260,15 +287,18 @@ export default class extends Controller {
         this.#bindHover();
         this.#bindResize();
         this.#loop();
-
-        requestAnimationFrame(() => this.#resize());
-        this.#syncAllHighlights();
+        // We're already inside rAF so dimensions are available — sync immediately
+        this.#resize();
+        // Async quality upgrades — don't block the initial render
+        this.#initEnvironment();
+        this.#initPostProcessing();
     }
 
     disconnect() {
         cancelAnimationFrame(this.#rafId);
         this.#resizeObserver?.disconnect();
         this.#controls?.dispose();
+        this.#composer?.dispose();
         this.#renderer?.dispose();
         this.#tooltip?.remove();
         this.#spinnerEl?.remove();
@@ -279,10 +309,25 @@ export default class extends Controller {
     stepValueChanged(step) { this.#updateWizardUI(step); }
 
     modelValueChanged(model) {
-        // Guard only the Three.js call — scene is null before connect() runs.
-        // #highlightSelected is pure DOM and safe to call at any time.
         if (this.#scene) this.#rebuildGeometry();
         this.#highlightSelected('model', model);
+        const lbl = document.getElementById('viewer-model-label');
+        if (lbl) {
+            lbl.textContent = (this.lockedValue && this.productNameValue)
+                ? this.productNameValue
+                : (PRODUCTS[model]?.label ?? model);
+        }
+    }
+
+    sofaTypeValueChanged(type) {
+        this.#highlightSelected('sofa-type', type);
+        this.#updateSeatsPanel();
+        this.#resolveModel();
+    }
+
+    sofaSeatsValueChanged(seats) {
+        this.#highlightSelected('sofa-seats', seats);
+        this.#resolveModel();
     }
 
     upholsteryValueChanged(type) {
@@ -341,7 +386,27 @@ export default class extends Controller {
     pickColor({ currentTarget })      { this.colorValue      = currentTarget.dataset.color; }
     pickLegs({ currentTarget })       { this.legsValue       = currentTarget.dataset.legs; }
 
+    pickType({ currentTarget }) {
+        const defaults = { sofa: '3', rinconera: '3', chaise: '2' };
+        this.sofaTypeValue  = currentTarget.dataset.type;
+        this.sofaSeatsValue = defaults[this.sofaTypeValue] ?? '3';
+    }
+
+    pickSeats({ currentTarget }) {
+        this.sofaSeatsValue = currentTarget.dataset.seats;
+    }
+
     nextStep() {
+        if (this.stepValue === 1) {
+            if (this.#step1Phase === 1) {
+                this.#step1Phase = 2;
+                this.#updateStep1UI();
+            } else {
+                this.#resolveModel();
+                this.stepValue = 2;
+            }
+            return;
+        }
         if (this.stepValue < 5) {
             this.stepValue++;
             if (this.stepValue === 5) this.#populateSummary();
@@ -349,42 +414,77 @@ export default class extends Controller {
     }
 
     prevStep() {
+        if (this.lockedValue) {
+            if (this.stepValue > 2) this.stepValue--;
+            return;
+        }
+        if (this.stepValue === 1 && this.#step1Phase === 2) {
+            this.#step1Phase = 1;
+            this.#updateStep1UI();
+            return;
+        }
+        if (this.stepValue === 2) {
+            this.#step1Phase = 2;
+            this.stepValue = 1;
+            return;
+        }
         if (this.stepValue > 1) this.stepValue--;
     }
 
     resetWizard() {
-        this.modelValue      = 'orion';
         this.upholsteryValue = 'tela';
         this.colorValue      = '#c4a882';
         this.legsValue       = 'natural';
-        this.stepValue       = 1;
+        if (this.lockedValue) {
+            this.stepValue = 2;
+        } else {
+            this.sofaTypeValue  = 'sofa';
+            this.sofaSeatsValue = '3';
+            this.#step1Phase    = 1;
+            this.stepValue      = 1;
+        }
     }
 
     // ── Wizard UI helpers ──────────────────────────────────────────────────
 
     #updateWizardUI(step) {
-        const meta = STEPS[step - 1];
+        const meta     = STEPS[step - 1];
+        const isLocked = this.lockedValue;
 
         if (this.hasStepTitleTarget) this.stepTitleTarget.textContent = meta.title;
         if (this.hasStepSubTarget)   this.stepSubTarget.textContent   = meta.sub;
-        if (this.hasStepNumTarget)   this.stepNumTarget.textContent   = step <= 4 ? `${step} / 4` : '✓';
+
+        if (this.hasStepNumTarget) {
+            if (step <= 4) {
+                const displayStep = isLocked ? step - 1 : step;
+                const totalSteps  = isLocked ? 3 : 4;
+                this.stepNumTarget.textContent = `${displayStep} / ${totalSteps}`;
+            } else {
+                this.stepNumTarget.textContent = '✓';
+            }
+        }
 
         this.stepPanelTargets.forEach(p => {
             p.style.display = Number(p.dataset.step) === step ? '' : 'none';
         });
 
         this.progressDotTargets.forEach(dot => {
-            const n = Number(dot.dataset.dot);
-            dot.dataset.state = n < step ? 'done' : n === step ? 'active' : 'idle';
+            const n          = Number(dot.dataset.dot);
+            const effective  = isLocked ? step - 1 : step;
+            dot.dataset.state = n < effective ? 'done' : n === effective ? 'active' : 'idle';
         });
 
         if (this.hasProgressFillTarget) {
-            const pct = step >= 5 ? 100 : ((step - 1) / 3) * 100;
+            let pct;
+            if (step >= 5)      pct = 100;
+            else if (isLocked)  pct = ((step - 2) / 2) * 100;
+            else                pct = ((step - 1) / 3) * 100;
             this.progressFillTarget.style.width = pct + '%';
         }
 
         if (this.hasPrevBtnTarget) {
-            this.prevBtnTarget.style.visibility = (step === 1 || step === 5) ? 'hidden' : '';
+            const minStep = isLocked ? 2 : 1;
+            this.prevBtnTarget.style.visibility = (step === minStep || step === 5) ? 'hidden' : '';
         }
 
         if (this.hasNextBtnTarget) {
@@ -399,6 +499,8 @@ export default class extends Controller {
                 this.nextBtnTarget.style.display = '';
             }
         }
+
+        if (step === 1) this.#updateStep1UI();
     }
 
     #highlightSelected(type, value) {
@@ -412,6 +514,8 @@ export default class extends Controller {
     // current values (value callbacks may have fired before targets were ready).
     #syncAllHighlights() {
         this.#highlightSelected('model',      this.modelValue);
+        this.#highlightSelected('sofa-type',  this.sofaTypeValue);
+        this.#highlightSelected('sofa-seats', this.sofaSeatsValue);
         this.#highlightSelected('upholstery', this.upholsteryValue);
         this.#highlightSelected('color',      this.colorValue);
         this.#highlightSelected('legs',       this.legsValue);
@@ -419,11 +523,19 @@ export default class extends Controller {
     }
 
     #populateSummary() {
-        const M = PRODUCTS[this.modelValue];
         const U = UPHOLSTERY[this.upholsteryValue];
         const L = LEGS[this.legsValue];
+        const TYPE_LABELS = { sofa: 'Sofá recto', rinconera: 'Rinconera', chaise: 'Chaise longue' };
 
-        if (this.hasSummaryModelTarget)      this.summaryModelTarget.textContent      = M?.label ?? this.modelValue;
+        if (this.hasSummaryModelTarget) {
+            if (this.lockedValue && this.productNameValue) {
+                this.summaryModelTarget.textContent = this.productNameValue;
+            } else {
+                const typeLabel  = TYPE_LABELS[this.sofaTypeValue] ?? this.sofaTypeValue;
+                const seatsLabel = this.sofaSeatsValue + ' plazas';
+                this.summaryModelTarget.textContent = `${typeLabel} · ${seatsLabel}`;
+            }
+        }
         if (this.hasSummaryUpholsteryTarget) this.summaryUpholsteryTarget.textContent = U?.label ?? this.upholsteryValue;
         if (this.hasSummaryLegsTarget)       this.summaryLegsTarget.textContent       = L?.label ?? this.legsValue;
         if (this.hasSummaryColorTarget) {
@@ -432,38 +544,82 @@ export default class extends Controller {
         }
     }
 
+    // ── Step 1 sub-phase helpers ───────────────────────────────────────────
+
+    #resolveModel() {
+        const key    = `${this.sofaTypeValue}-${this.sofaSeatsValue}`;
+        const mapped = MODEL_MAP[key];
+        if (mapped && mapped !== this.modelValue) this.modelValue = mapped;
+    }
+
+    #updateSeatsPanel() {
+        const type = this.sofaTypeValue;
+        this.element.querySelectorAll('[data-seats-for]').forEach(el => {
+            el.style.display = el.dataset.seatsFor === type ? '' : 'none';
+        });
+    }
+
+    #updateStep1UI() {
+        if (this.stepValue !== 1) return;
+        const isPhase1 = this.#step1Phase === 1;
+        const meta = isPhase1
+            ? { title: 'Tipo de sofá',  sub: 'Elige la forma que mejor se adapta a tu espacio' }
+            : { title: 'Plazas',         sub: 'Selecciona cuántos asientos necesitas' };
+
+        if (this.hasStepTitleTarget) this.stepTitleTarget.textContent = meta.title;
+        if (this.hasStepSubTarget)   this.stepSubTarget.textContent   = meta.sub;
+
+        const p1 = this.element.querySelector('[data-step1phase="1"]');
+        const p2 = this.element.querySelector('[data-step1phase="2"]');
+        if (p1) p1.style.display = isPhase1 ? '' : 'none';
+        if (p2) p2.style.display = isPhase1 ? 'none' : '';
+
+        if (!isPhase1) this.#updateSeatsPanel();
+
+        if (this.hasPrevBtnTarget) {
+            this.prevBtnTarget.style.visibility = isPhase1 ? 'hidden' : '';
+        }
+    }
+
     // ── Three.js ──────────────────────────────────────────────────────────
 
     #initRenderer() {
-        this.#renderer = new THREE.WebGLRenderer({ canvas: this.canvasTarget, antialias: true, alpha: true });
+        this.#renderer = new THREE.WebGLRenderer({ canvas: this.canvasTarget, antialias: true });
         this.#renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        this.#renderer.setClearAlpha(0);
-        this.#renderer.shadowMap.enabled = true;
-        this.#renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+        this.#renderer.shadowMap.enabled   = true;
+        this.#renderer.shadowMap.type      = THREE.PCFSoftShadowMap;  // softer shadow edges
+        this.#renderer.outputColorSpace    = THREE.SRGBColorSpace;
+        this.#renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+        this.#renderer.toneMappingExposure = 1.1;
         this.#resize();
     }
 
     #initScene() {
         this.#scene = new THREE.Scene();
+        // Explicit background needed for EffectComposer (no canvas alpha required)
+        this.#scene.background = new THREE.Color(0x0a0a1a);
+
         // Use getBoundingClientRect for reliable dimensions at connect() time;
         // fall back to 16:9 if layout hasn't happened yet (fixed by ResizeObserver later).
         const r = this.canvasTarget.parentElement.getBoundingClientRect();
         const aspect = r.width && r.height ? r.width / r.height : 16 / 9;
         this.#camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 50);
-        this.#camera.position.set(0, 1.7, 4.8);
-        this.#camera.lookAt(0, 0.55, 0);
+        this.#camera.position.set(0, 1.2, 5.0);
+        this.#camera.lookAt(0, 0.80, 0);
 
+        // Showroom floor: large dark plane with slight metallic reflection and shadow receive
         const floor = new THREE.Mesh(
             new THREE.PlaneGeometry(14, 14),
-            new THREE.MeshStandardMaterial({ color: 0x060618, roughness: 1 })
+            new THREE.MeshStandardMaterial({
+                color: 0x1a1a2e,
+                roughness: 0.8,
+                metalness: 0.1,
+                envMapIntensity: 0.6,
+            })
         );
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         this.#scene.add(floor);
-
-        const grid = new THREE.GridHelper(12, 24, 0x001a33, 0x000d22);
-        grid.position.y = 0.002;
-        this.#scene.add(grid);
     }
 
     #initMaterials() {
@@ -473,11 +629,13 @@ export default class extends Controller {
         // MeshPhysicalMaterial: enables sheen (fabric/velvet) and clearcoat (leather).
         // sheen and clearcoat start at non-zero so their shader variants are always
         // compiled — smooth lerp never needs needsUpdate.
+        // envMapIntensity: 1.0 lets the PMREM environment reflect on all surfaces.
         const physBase = {
             roughness: 0.97, metalness: 0.00,
             sheen: 0.06, sheenRoughness: 0.96,
             clearcoat: 0.01, clearcoatRoughness: 0.95,
             bumpMap: this.#bumpFabric, bumpScale: 0.058,
+            envMapIntensity: 1.0,
         };
         this.#matFabric  = new THREE.MeshPhysicalMaterial({
             ...physBase,
@@ -491,8 +649,8 @@ export default class extends Controller {
             sheenColor: new THREE.Color(0xcab48e),
             bumpScale: 0.020,
         });
-        this.#matLegs  = new THREE.MeshStandardMaterial({ color: 0x9b7050, roughness: 0.88, metalness: 0.04 });
-        this.#matFrame = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.75, metalness: 0.08 });
+        this.#matLegs  = new THREE.MeshStandardMaterial({ color: 0x9b7050, roughness: 0.88, metalness: 0.04, envMapIntensity: 1.0 });
+        this.#matFrame = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.75, metalness: 0.08, envMapIntensity: 1.0 });
     }
 
     // Woven-fabric normal map: regular grid + noise for thread texture
@@ -580,9 +738,9 @@ export default class extends Controller {
         this.#controls.autoRotate      = true;
         this.#controls.autoRotateSpeed = 0.6;
         this.#controls.maxPolarAngle   = Math.PI / 2.1;
-        this.#controls.minDistance     = 2.5;
-        this.#controls.maxDistance     = 9;
-        this.#controls.target.set(0, 0.55, 0);
+        this.#controls.minDistance     = 2.0;
+        this.#controls.maxDistance     = 10.0;
+        this.#controls.target.set(0, 0.80, 0);
         this.#controls.update();
     }
 
@@ -623,10 +781,12 @@ export default class extends Controller {
         this.#tryLoadGlb(prod.glb).then(glbScene => {
             this.#hideSpinner();
             if (!glbScene || this.modelValue !== modelKey) return;
+            // Materials first — removes embedded floor planes before bbox is computed
+            const hasMeshes = this.#applyGlbMaterials(glbScene);
+            if (!hasMeshes) return;  // all meshes filtered out → keep procedural placeholder
             this.#scene.remove(this.#group);
             this.#group.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
-            this.#fitGlbToScene(glbScene);
-            this.#applyGlbMaterials(glbScene);
+            this.#fitGlbToScene(glbScene, prod.rotY ?? 0);
             this.#group = glbScene;
             this.#scene.add(this.#group);
             // Fade-in for the real model
@@ -672,7 +832,22 @@ export default class extends Controller {
         try {
             const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
             return await new Promise(resolve =>
-                new GLTFLoader().load(`/models/${modelKey}.glb`, g => resolve(g.scene), null, () => resolve(null))
+                new GLTFLoader().load(
+                    `${this.baseUrlValue}models/${modelKey}.glb`,
+                    gltf => {
+                        const scene  = gltf.scene;
+                        const box    = new THREE.Box3().setFromObject(scene);
+                        const size   = box.getSize(new THREE.Vector3());
+                        const center = box.getCenter(new THREE.Vector3());
+                        console.log('=== DEBUG MODELO ===', modelKey);
+                        console.log('Tamaño (w/h/d):', size.x.toFixed(3), size.y.toFixed(3), size.z.toFixed(3));
+                        console.log('Centro (x/y/z):', center.x.toFixed(3), center.y.toFixed(3), center.z.toFixed(3));
+                        console.log('===================');
+                        resolve(scene);
+                    },
+                    null,
+                    () => resolve(null)
+                )
             );
         } catch {
             return null;
@@ -680,40 +855,94 @@ export default class extends Controller {
     }
 
     #addLights() {
-        // Bluish ambient — space feel
-        this.#scene.add(new THREE.AmbientLight(0x7799cc, 0.38));
+        // HemisphereLight: realistic indoor ambient — blue sky / warm dark ground
+        this.#scene.add(new THREE.HemisphereLight(0xb0d0ff, 0x2a1a0a, 1.2));
 
-        // Warm directional key — main shadow caster
-        const key = new THREE.DirectionalLight(0xfff5e8, 1.6);
-        key.position.set(3, 7, 5);
+        // Key light: upper-left diagonal, main shadow caster
+        const key = new THREE.DirectionalLight(0xfff5e8, 2.5);
+        key.position.set(-2, 5, 3);
         key.castShadow = true;
-        key.shadow.mapSize.set(1024, 1024);
+        key.shadow.mapSize.set(2048, 2048);
         key.shadow.camera.near   = 1;
-        key.shadow.camera.far    = 22;
-        key.shadow.camera.left   = key.shadow.camera.bottom = -5;
-        key.shadow.camera.right  = key.shadow.camera.top   =  5;
+        key.shadow.camera.far    = 18;
+        key.shadow.camera.left   = key.shadow.camera.bottom = -4;
+        key.shadow.camera.right  = key.shadow.camera.top   =  4;
+        key.shadow.bias = -0.0005;
         this.#scene.add(key);
-
-        // Cyan rim — accentuates edges (space neon)
-        const rim = new THREE.DirectionalLight(0x00f5ff, 0.42);
-        rim.position.set(-4, 5, -3);
-        this.#scene.add(rim);
-
-        // Violet fill — subtle depth from below
-        const fill = new THREE.DirectionalLight(0x7b2fff, 0.20);
-        fill.position.set(4, -1, -2);
-        this.#scene.add(fill);
 
         // Orbiting warm point light — makes clearcoat/sheen glitter dynamically
         // decay=2 keeps it local to the sofa; updated in #tickLighting()
-        this.#pointLight = new THREE.PointLight(0xffe8c0, 1.1, 7, 2);
+        this.#pointLight = new THREE.PointLight(0xffe8c0, 2.5, 7, 2);
         this.#pointLight.position.set(3, 2.5, 3);
         this.#scene.add(this.#pointLight);
 
-        // Floor neon bounce — low-placed cyan for showroom atmosphere
-        this.#floorLight = new THREE.PointLight(0x00f5ff, 0.28, 5, 2);
-        this.#floorLight.position.set(0, 0.1, 2);
-        this.#scene.add(this.#floorLight);
+        // RectAreaLight simulating studio window — loaded async (requires init lib)
+        this.#initRectAreaLight();
+    }
+
+    async #initRectAreaLight() {
+        try {
+            const { RectAreaLightUniformsLib } = await import('three/addons/lights/RectAreaLightUniformsLib.js');
+            RectAreaLightUniformsLib.init();
+            const rect = new THREE.RectAreaLight(0xfff0e8, 3, 3, 2.5);
+            rect.position.set(0, 1.5, 3.5);
+            rect.lookAt(0, 0.8, 0);
+            this.#scene.add(rect);
+        } catch {
+            // Fallback: front DirectionalLight if RectAreaLight unavailable
+            const fill = new THREE.DirectionalLight(0xffeedd, 1.5);
+            fill.position.set(0, 2, 4);
+            this.#scene.add(fill);
+        }
+    }
+
+    async #initEnvironment() {
+        try {
+            const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+            const pmrem = new THREE.PMREMGenerator(this.#renderer);
+            const envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+            this.#scene.environment = envTexture;
+            pmrem.dispose();
+        } catch {
+            // No environment map — materials still look good without it
+        }
+    }
+
+    async #initPostProcessing() {
+        try {
+            const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }] = await Promise.all([
+                import('three/addons/postprocessing/EffectComposer.js'),
+                import('three/addons/postprocessing/RenderPass.js'),
+                import('three/addons/postprocessing/UnrealBloomPass.js'),
+            ]);
+
+            const { clientWidth: w, clientHeight: h } = this.canvasTarget.parentElement;
+            const composer = new EffectComposer(this.#renderer);
+            composer.addPass(new RenderPass(this.#scene, this.#camera));
+
+            // Optional SSAO for corner/crease depth
+            try {
+                const { SSAOPass } = await import('three/addons/postprocessing/SSAOPass.js');
+                const ssao = new SSAOPass(this.#scene, this.#camera, w || 1280, h || 720);
+                ssao.kernelRadius = 16;
+                ssao.minDistance  = 0.005;
+                ssao.maxDistance  = 0.1;
+                composer.addPass(ssao);
+            } catch { /* SSAO unavailable — skip */ }
+
+            // Subtle bloom: highlight edges under the studio lighting
+            composer.addPass(new UnrealBloomPass(
+                new THREE.Vector2(w || 1280, h || 720),
+                0.3,  // strength
+                0.4,  // radius
+                0.8   // threshold
+            ));
+
+            this.#composer = composer;
+            this.#resize(); // sync composer size to current canvas
+        } catch {
+            // Post-processing unavailable — plain renderer continues
+        }
     }
 
     #bindResize() {
@@ -725,6 +954,7 @@ export default class extends Controller {
         const { clientWidth: w, clientHeight: h } = this.canvasTarget.parentElement;
         if (!w || !h) return;
         this.#renderer.setSize(w, h);
+        this.#composer?.setSize(w, h);
         if (this.#camera) {
             this.#camera.aspect = w / h;
             this.#camera.updateProjectionMatrix();
@@ -762,8 +992,9 @@ export default class extends Controller {
 
     #loop() {
         this.#rafId = requestAnimationFrame(() => this.#loop());
-        const delta = this.#clock.getDelta();
-        const elapsed = this.#clock.getElapsedTime();
+        this.#clock.update();
+        const delta   = this.#clock.getDelta();
+        const elapsed = this.#clock.getElapsed();
         const alpha = 1 - Math.exp(-delta * 7);
 
         this.#controls?.update();
@@ -772,14 +1003,18 @@ export default class extends Controller {
         this.#tickCameraSmooth(alpha);
         this.#tickLighting(delta, elapsed);
         this.#tickParticles(delta);
-        this.#renderer.render(this.#scene, this.#camera);
+        if (this.#composer) {
+            this.#composer.render();
+        } else {
+            this.#renderer.render(this.#scene, this.#camera);
+        }
     }
 
     // ── Geometry fade-in when model changes ───────────────────────────────
 
     #tickGroupFade(delta) {
         if (this.#groupFadeIn >= 1) return;
-        this.#groupFadeIn = Math.min(1, this.#groupFadeIn + delta * 4); // ~0.25 s
+        this.#groupFadeIn = Math.min(1, this.#groupFadeIn + Math.max(delta, 0.008) * 4);
         const op = this.#groupFadeIn;
         for (const mat of [this.#matFabric, this.#matCushion, this.#matLegs, this.#matFrame]) {
             if (!mat) continue;
@@ -813,10 +1048,6 @@ export default class extends Controller {
             2.4 + Math.sin(elapsed * 0.5) * 0.4,   // subtle vertical bob
             Math.sin(this.#pointLightAngle) * r
         );
-        // Floor-bounce light pulses very gently with a 3-second period
-        if (this.#floorLight) {
-            this.#floorLight.intensity = 0.22 + Math.sin(elapsed * 2.1) * 0.06;
-        }
     }
 
     // ── Star dust particles — slow counter-rotation for parallax feel ─────
@@ -959,41 +1190,104 @@ export default class extends Controller {
 
     // ── GLB helpers ───────────────────────────────────────────────────────
 
-    // Center + scale the loaded GLB so it sits on the floor at a consistent size.
-    #fitGlbToScene(scene) {
-        const box    = new THREE.Box3().setFromObject(scene);
-        const center = box.getCenter(new THREE.Vector3());
-        const size   = box.getSize(new THREE.Vector3());
+    // Normalize a loaded GLB: largest dimension → 2.5 units, centered, floor at Y=0.
+    // rotY: pre-fit Y rotation (radians) for models loaded facing the wrong direction.
+    // Uses per-mesh bounding boxes (not the full scene graph) to avoid camera/light
+    // nodes inflating the bounds. Filters outlier meshes (> 5× median distance from
+    // centroid) so detached shadow planes or stray vertices don't break the fit.
+    #fitGlbToScene(scene, rotY = 0) {
+        scene.updateMatrixWorld(true);
+        if (rotY) { scene.rotation.y += rotY; scene.updateMatrixWorld(true); }
 
-        // Translate: center X/Z, bottom to y=0
-        scene.position.x -= center.x;
-        scene.position.z -= center.z;
-        scene.position.y -= box.min.y;
-
-        // Scale to target height ~1.8 units, cap at 2× to avoid oversized models
-        const targetH = 1.8;
-        const maxDim  = Math.max(size.x, size.y, size.z, 0.01);
-        const scale   = Math.min(targetH / Math.max(size.y, 0.01), 1.6 / maxDim);
-        scene.scale.setScalar(scale);
-
-        // Re-seat after scale
-        const box2 = new THREE.Box3().setFromObject(scene);
-        scene.position.y -= box2.min.y;
-    }
-
-    // Assign shared materials to all meshes in the loaded GLB.
-    // Leg/structural parts get #matLegs; everything else gets #matFabric.
-    #applyGlbMaterials(scene) {
-        const legKeywords = ['leg', 'foot', 'paw', 'support', 'base', 'metal',
-                             'wood', 'pata', 'pie', 'frame', 'struct', 'struc'];
+        // Per-mesh bounding boxes in world space
+        const mboxes = [];
         scene.traverse(obj => {
             if (!obj.isMesh) return;
-            const name  = (obj.name ?? '').toLowerCase();
+            const b = new THREE.Box3().setFromObject(obj);
+            if (!b.isEmpty()) mboxes.push(b);
+        });
+        if (!mboxes.length) return;
+
+        // Centroid of mesh centers
+        const centroid = new THREE.Vector3();
+        const centers  = mboxes.map(b => b.getCenter(new THREE.Vector3()));
+        centers.forEach(c => centroid.add(c));
+        centroid.divideScalar(mboxes.length);
+
+        // Filter outliers: keep meshes within 5× median distance from centroid
+        const dists  = centers.map(c => c.distanceTo(centroid));
+        const sorted = [...dists].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)] || 0;
+        const limit  = Math.max(median * 5, 0.5);
+
+        const box = new THREE.Box3();
+        mboxes.forEach((b, i) => { if (dists[i] <= limit) box.union(b); });
+        if (box.isEmpty()) mboxes.forEach(b => box.union(b)); // fallback: use all
+
+        const ctr   = box.getCenter(new THREE.Vector3());
+        const size  = box.getSize(new THREE.Vector3());
+        const scale = 2.5 / Math.max(size.x, size.y, size.z, 0.001);
+
+        scene.scale.setScalar(scale);
+        scene.position.set(-scale * ctr.x, -scale * box.min.y, -scale * ctr.z);
+
+        this.#camTgtPos.set(0, 1.2, 5);
+        this.#camTgtLook.set(0, 0.8, 0);
+        this.#camTransitioning = true;
+    }
+
+    // Assign shared materials to all meshes in the loaded GLB and remove
+    // embedded floor/shadow planes that would clash with our scene floor.
+    // Must be called BEFORE #fitGlbToScene so the bounding box is computed
+    // without the (now-removed) floor geometry.
+    // Returns true if at least one mesh survived (false → caller should skip GLB).
+    #applyGlbMaterials(scene) {
+        const legKeywords    = ['leg', 'foot', 'paw', 'support', 'metal',
+                                'pata', 'pie', 'struct', 'struc'];
+        const groundKeywords = ['floor', 'ground', 'plane', 'shadow', 'surface',
+                                'suelo', 'terrain', 'carpet', 'rug', 'decal'];
+
+        // Scene bounds for relative floor detection (unscaled model units)
+        const sceneBounds = new THREE.Box3();
+        scene.traverse(o => { if (o.isMesh) sceneBounds.expandByObject(o); });
+        const sceneSize  = sceneBounds.getSize(new THREE.Vector3());
+        // Only remove geometry in the lowest 4% of the model height
+        const floorLimit = sceneBounds.min.y + 0.04 * sceneSize.y;
+
+        const toRemove = [];
+
+        scene.traverse(obj => {
+            if (!obj.isMesh) return;
+            const name = (obj.name ?? '').toLowerCase();
+
+            // 1. Remove by keyword match
+            if (groundKeywords.some(k => name.includes(k))) {
+                toRemove.push(obj);
+                return;
+            }
+
+            // 2. Remove implicit floor planes: extremely flat (< 1.5% h/w) AND at the very bottom
+            const mb = new THREE.Box3().setFromObject(obj);
+            const ms = mb.getSize(new THREE.Vector3());
+            const isVeryFlat = ms.y < 0.015 * Math.max(ms.x, ms.z, 0.001);
+            const isAtBottom = mb.min.y <= floorLimit;
+            if (isVeryFlat && isAtBottom) {
+                toRemove.push(obj);
+                return;
+            }
+
             const isLeg = legKeywords.some(k => name.includes(k));
             obj.material      = isLeg ? this.#matLegs : this.#matFabric;
             obj.castShadow    = true;
             obj.receiveShadow = true;
         });
+
+        toRemove.forEach(obj => obj.removeFromParent());
+
+        // Safety: if everything was removed the model cannot be displayed
+        let survived = 0;
+        scene.traverse(o => { if (o.isMesh) survived++; });
+        return survived > 0;
     }
 
     // ── Spatial loading spinner ───────────────────────────────────────────

@@ -20,7 +20,7 @@ class MuebleController extends AbstractController
         return $this->render('mueble/configurator.html.twig');
     }
 
-    #[Route('/mueble/{id}', name: 'app_mueble_show')]
+#[Route('/mueble/{id}', name: 'app_mueble_show')]
     public function show(Mueble $mueble): Response
     {
         return $this->render('mueble/show.html.twig', [

@@ -1,143 +1,471 @@
-{% extends 'base.html.twig' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Space Admin · Nuevas Tendencias</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-{% block title %}Iniciar sesión · Nuevas Tendencias{% endblock %}
+    :root {
+        --cyan:   #00f5ff;
+        --violet: #7b2fff;
+        --bg:     #0a0a1a;
+        --card:   #0d0d24;
+        --border: #1a1a3e;
+        --text:   #e8eaff;
+        --muted:  #5a5a8a;
+    }
 
-{% block stylesheets %}
-<style>
-.auth-wrap {
-    min-height: calc(100vh - 72px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 16px;
-}
-.auth-card {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    background: #0e0e2e;
-    border: 1px solid #1e1e4a;
-    border-radius: 20px;
-    padding: 48px 40px;
-    box-shadow: 0 0 60px rgba(123,47,255,.12), 0 0 30px rgba(0,245,255,.06);
-}
-.auth-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 15%; right: 15%;
-    height: 2px;
-    background: linear-gradient(90deg, #00f5ff, #7b2fff);
-    border-radius: 0 0 4px 4px;
-}
-.auth-icon {
-    width: 60px; height: 60px;
-    background: linear-gradient(135deg, #7b2fff, #2a0fa0);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px;
-    margin: 0 auto 20px;
-    box-shadow: 0 0 28px rgba(123,47,255,.5);
-}
-.auth-title { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-.auth-sub   { text-align: center; color: #6b6b9a; font-size: 13px; margin-bottom: 32px; }
-.auth-field { margin-bottom: 18px; }
-.auth-field label {
-    display: block;
-    font-size: 11px; font-weight: 600;
-    letter-spacing: .08em; text-transform: uppercase;
-    color: #6b6b9a; margin-bottom: 7px;
-}
-.auth-field input {
-    width: 100%;
-    background: rgba(255,255,255,.04);
-    border: 1px solid #1e1e4a;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 14px; color: #dde1ff;
-    font-family: inherit;
-    transition: border-color .2s, box-shadow .2s;
-}
-.auth-field input:focus {
-    outline: none;
-    border-color: rgba(0,245,255,.5);
-    box-shadow: 0 0 0 3px rgba(0,245,255,.08);
-}
-.auth-field input::placeholder { color: #6b6b9a; }
-.remember-row {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 24px; font-size: 13px; color: #6b6b9a;
-}
-.remember-row input[type=checkbox] { accent-color: #00f5ff; width: 15px; height: 15px; }
-.alert-error {
-    background: rgba(255,77,109,.1);
-    border: 1px solid rgba(255,77,109,.3);
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 13px; color: #ff4d6d;
-    margin-bottom: 20px;
-}
-.btn-auth {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, #00f5ff -20%, #7b2fff 120%);
-    border: none; border-radius: 10px;
-    color: #fff; font-size: 15px; font-weight: 700;
-    font-family: inherit; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(123,47,255,.35);
-    transition: box-shadow .2s;
-}
-.btn-auth:hover { box-shadow: 0 4px 30px rgba(0,245,255,.35), 0 4px 20px rgba(123,47,255,.4); }
-.auth-footer {
-    margin-top: 24px; text-align: center;
-    font-size: 13px; color: #6b6b9a;
-}
-.auth-footer a { color: #00f5ff; text-decoration: none; }
-.auth-footer a:hover { text-decoration: underline; }
-</style>
-{% endblock %}
+    html, body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        overflow: hidden;
+    }
 
-{% block body %}
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-icon">🛸</div>
-    <h1 class="auth-title">Bienvenido</h1>
-    <p class="auth-sub">Inicia sesión en Nuevas Tendencias</p>
+    /* ── Canvas stars ─────────────────────────────────────── */
+    #star-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+    }
 
+    /* ── Nebula blobs ─────────────────────────────────────── */
+    .nebula {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(90px);
+        pointer-events: none;
+        z-index: 0;
+        animation: nebDrift 18s ease-in-out infinite alternate;
+    }
+    .nebula-1 {
+        width: 55vw; height: 55vw;
+        top: -20%; left: -15%;
+        background: radial-gradient(circle, rgba(123,47,255,.18) 0%, transparent 70%);
+        animation-duration: 22s;
+    }
+    .nebula-2 {
+        width: 45vw; height: 45vw;
+        bottom: -15%; right: -10%;
+        background: radial-gradient(circle, rgba(0,245,255,.12) 0%, transparent 70%);
+        animation-duration: 28s;
+        animation-direction: alternate-reverse;
+    }
+    @keyframes nebDrift {
+        from { transform: translate(0, 0) scale(1); }
+        to   { transform: translate(3%, 4%) scale(1.06); }
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .page-wrap {
+        position: relative;
+        z-index: 1;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    /* ── Card ─────────────────────────────────────────────── */
+    .login-card {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 44px 40px 36px;
+        box-shadow:
+            0 0 0 1px rgba(0,245,255,.04),
+            0 0 60px rgba(123,47,255,.14),
+            0 0 30px rgba(0,245,255,.06),
+            0 32px 64px rgba(0,0,0,.5);
+        backdrop-filter: blur(20px);
+    }
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 18%; right: 18%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+        border-radius: 0 0 4px 4px;
+    }
+    .login-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 24px;
+        background: radial-gradient(ellipse at 50% 0%, rgba(0,245,255,.04) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    /* ── Ship icon ────────────────────────────────────────── */
+    .ship-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+    }
+    .ship-icon {
+        position: relative;
+        width: 68px; height: 68px;
+        background: linear-gradient(145deg, #12124a, #0a0a2e);
+        border: 1px solid rgba(0,245,255,.25);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow:
+            0 0 0 1px rgba(0,245,255,.08),
+            0 0 28px rgba(0,245,255,.2),
+            0 0 56px rgba(123,47,255,.18),
+            inset 0 1px 0 rgba(0,245,255,.1);
+        animation: shipPulse 3s ease-in-out infinite;
+    }
+    @keyframes shipPulse {
+        0%, 100% { box-shadow: 0 0 0 1px rgba(0,245,255,.08), 0 0 28px rgba(0,245,255,.2), 0 0 56px rgba(123,47,255,.18), inset 0 1px 0 rgba(0,245,255,.1); }
+        50%       { box-shadow: 0 0 0 1px rgba(0,245,255,.16), 0 0 42px rgba(0,245,255,.35), 0 0 80px rgba(123,47,255,.28), inset 0 1px 0 rgba(0,245,255,.2); }
+    }
+
+    /* ── Headings ─────────────────────────────────────────── */
+    .login-title {
+        text-align: center;
+        font-size: 26px; font-weight: 800;
+        letter-spacing: -.03em;
+        background: linear-gradient(135deg, #e8eaff 30%, var(--cyan));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 6px;
+    }
+    .login-sub {
+        text-align: center;
+        font-size: 12px; font-weight: 500;
+        letter-spacing: .08em; text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 32px;
+    }
+    .login-sub span { color: rgba(0,245,255,.55); }
+
+    /* ── Fields ───────────────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+    .field-label {
+        display: block;
+        font-size: 10px; font-weight: 700;
+        letter-spacing: .12em; text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+    .field-wrap {
+        position: relative;
+    }
+    .field-icon {
+        position: absolute;
+        left: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+        line-height: 1;
+    }
+    .field-input {
+        width: 100%;
+        background: rgba(255,255,255,.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px 12px 40px;
+        font-size: 14px; color: var(--text);
+        font-family: inherit;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .field-input:focus {
+        border-color: rgba(0,245,255,.45);
+        background: rgba(0,245,255,.03);
+        box-shadow: 0 0 0 3px rgba(0,245,255,.07), 0 0 16px rgba(0,245,255,.08);
+    }
+    .field-input::placeholder { color: #3a3a60; }
+
+    /* ── Remember row ─────────────────────────────────────── */
+    .remember-row {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 22px; font-size: 12px; color: var(--muted);
+    }
+    .remember-row input[type=checkbox] {
+        accent-color: var(--cyan);
+        width: 14px; height: 14px;
+        cursor: pointer;
+    }
+    .remember-row label { cursor: pointer; }
+
+    /* ── Alert ────────────────────────────────────────────── */
+    .alert-error {
+        background: rgba(255,77,109,.08);
+        border: 1px solid rgba(255,77,109,.28);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 12px; color: #ff6b82;
+        margin-bottom: 18px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .alert-success {
+        background: rgba(0,245,255,.06);
+        border: 1px solid rgba(0,245,255,.2);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 12px; color: var(--cyan);
+        margin-bottom: 18px;
+    }
+
+    /* ── Submit button ────────────────────────────────────── */
+    .btn-launch {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(135deg, rgba(0,245,255,.15) 0%, rgba(123,47,255,.25) 100%);
+        border: 1px solid rgba(0,245,255,.4);
+        border-radius: 12px;
+        color: var(--cyan);
+        font-size: 14px; font-weight: 700;
+        font-family: inherit; cursor: pointer;
+        letter-spacing: .04em;
+        box-shadow: 0 0 24px rgba(0,245,255,.18), inset 0 1px 0 rgba(0,245,255,.12);
+        text-shadow: 0 0 14px rgba(0,245,255,.6);
+        transition: all .22s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-launch:hover {
+        background: linear-gradient(135deg, rgba(0,245,255,.22) 0%, rgba(123,47,255,.35) 100%);
+        box-shadow: 0 0 44px rgba(0,245,255,.32), inset 0 1px 0 rgba(0,245,255,.2);
+        transform: translateY(-1px);
+    }
+    .btn-launch:active { transform: translateY(0); }
+
+    /* ── Demo credentials ─────────────────────────────────── */
+    .demo-box {
+        margin-top: 22px;
+        background: rgba(0,245,255,.03);
+        border: 1px solid rgba(0,245,255,.1);
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+    .demo-label {
+        font-size: 9px; font-weight: 700;
+        letter-spacing: .14em; text-transform: uppercase;
+        color: rgba(0,245,255,.4);
+        margin-bottom: 8px;
+    }
+    .demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    .demo-item {
+        display: flex; flex-direction: column; gap: 2px;
+    }
+    .demo-key {
+        font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--muted);
+    }
+    .demo-val {
+        font-size: 13px; font-weight: 700; font-family: 'Courier New', monospace;
+        color: var(--cyan);
+        letter-spacing: .04em;
+        cursor: pointer;
+        transition: color .15s;
+    }
+    .demo-val:hover { color: #fff; }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .login-footer {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+        color: #2a2a4a;
+    }
+    </style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+
+<div class="page-wrap">
+  <div class="login-card">
+
+    {# ── Icon ── #}
+    <div class="ship-wrap">
+      <div class="ship-icon">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 3C17 3 9 10 9 20H25C25 10 17 3 17 3Z"
+                fill="url(#shipBody)" stroke="rgba(0,245,255,.5)" stroke-width=".8"/>
+          <path d="M11 20L7 26L17 23L27 26L23 20H11Z"
+                fill="url(#shipWing)" stroke="rgba(0,245,255,.35)" stroke-width=".7"/>
+          <circle cx="17" cy="14" r="3.5" fill="url(#shipWindow)"
+                  stroke="rgba(0,245,255,.7)" stroke-width=".8"/>
+          <rect x="15.2" y="26" width="3.6" height="5" rx="1.8"
+                fill="url(#exhaustGrad)" opacity=".9"/>
+          <defs>
+            <linearGradient id="shipBody" x1="17" y1="3" x2="17" y2="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#a0b4ff"/>
+              <stop offset="100%" stop-color="#4060cc"/>
+            </linearGradient>
+            <linearGradient id="shipWing" x1="17" y1="20" x2="17" y2="26" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#5070d0"/>
+              <stop offset="100%" stop-color="#2a3a80"/>
+            </linearGradient>
+            <radialGradient id="shipWindow" cx="50%" cy="40%">
+              <stop offset="0%" stop-color="#aaf0ff"/>
+              <stop offset="100%" stop-color="#0090c0"/>
+            </radialGradient>
+            <linearGradient id="exhaustGrad" x1="17" y1="26" x2="17" y2="31" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#00f5ff" stop-opacity=".9"/>
+              <stop offset="100%" stop-color="#7b2fff" stop-opacity=".2"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    {# ── Headings ── #}
+    <h1 class="login-title">Space Admin</h1>
+    <p class="login-sub">Nuevas Tendencias&nbsp;·&nbsp;<span>Panel de Control</span></p>
+
+    {# ── Flash messages ── #}
     {% for msg in app.flashes('success') %}
-      <div style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:10px;padding:11px 14px;font-size:13px;color:#00f5ff;margin-bottom:18px;">{{ msg }}</div>
+      <div class="alert-success">{{ msg }}</div>
     {% endfor %}
 
+    {# ── Auth error ── #}
     {% if error %}
-      <div class="alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      <div class="alert-error">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ error.messageKey|trans(error.messageData, 'security') }}
+      </div>
     {% endif %}
 
-    <form method="POST" action="{{ path('app_login') }}">
-      <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+    {# ── Form ── #}
+    <form method="POST" action="{{ path('app_admin_login') }}">
 
-      <div class="auth-field">
-        <label for="username">Email</label>
-        <input type="email" id="username" name="_username"
-               value="{{ last_username }}" placeholder="tu@email.com"
-               autocomplete="email" autofocus required>
+      <div class="field">
+        <label class="field-label" for="username">Usuario</label>
+        <div class="field-wrap">
+          <span class="field-icon">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <input class="field-input" type="text" id="username" name="_username"
+                 value="{{ last_username }}" placeholder="admin"
+                 autocomplete="username" autofocus required>
+        </div>
       </div>
 
-      <div class="auth-field">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" name="_password"
-               placeholder="••••••••" autocomplete="current-password" required>
+      <div class="field">
+        <label class="field-label" for="password">Contraseña</label>
+        <div class="field-wrap">
+          <span class="field-icon">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+          </span>
+          <input class="field-input" type="password" id="password" name="_password"
+                 placeholder="••••••••" autocomplete="current-password" required>
+        </div>
       </div>
 
       <div class="remember-row">
         <input type="checkbox" id="remember" name="_remember_me">
-        <label for="remember" style="text-transform:none;letter-spacing:0;font-size:13px;margin:0;">Recordar sesión</label>
+        <label for="remember">Mantener sesión iniciada</label>
       </div>
 
-      <button type="submit" class="btn-auth">Entrar →</button>
+      <button type="submit" class="btn-launch">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+        Entrar al sistema →
+      </button>
     </form>
 
-    <div class="auth-footer">
-      ¿No tienes cuenta? <a href="{{ path('app_register') }}">Regístrate</a>
+    {# ── Demo credentials ── #}
+    <div class="demo-box">
+      <div class="demo-label">Credenciales de demostración</div>
+      <div class="demo-grid">
+        <div class="demo-item">
+          <div class="demo-key">Usuario</div>
+          <div class="demo-val" id="demo-user" title="Click para copiar">admin</div>
+        </div>
+        <div class="demo-item">
+          <div class="demo-key">Contraseña</div>
+          <div class="demo-val" id="demo-pass" title="Click para copiar">admin123</div>
+        </div>
+      </div>
     </div>
+
+    <div class="login-footer">Acceso restringido · Solo personal autorizado</div>
+
   </div>
 </div>
-{% endblock %}
+
+<script>
+(function () {
+    // ── Star canvas ────────────────────────────────────────────────────
+    const cv  = document.getElementById('star-canvas');
+    const ctx = cv.getContext('2d');
+    let W, H, stars;
+
+    function resize() {
+        W = cv.width  = innerWidth;
+        H = cv.height = innerHeight;
+        initStars();
+    }
+
+    function initStars() {
+        stars = Array.from({ length: 280 }, () => ({
+            x:  Math.random() * W,
+            y:  Math.random() * H,
+            r:  0.3 + Math.random() * 1.4,
+            a:  0.2 + Math.random() * 0.8,
+            sp: 0.0003 + Math.random() * 0.0008,
+            ph: Math.random() * Math.PI * 2,
+        }));
+    }
+
+    let t = 0;
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        t += 0.016;
+        for (const s of stars) {
+            const alpha = s.a * (0.55 + 0.45 * Math.sin(t * s.sp * 80 + s.ph));
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200,210,255,${alpha.toFixed(3)})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    draw();
+
+    // ── Demo credentials — click to fill ──────────────────────────────
+    const userInput = document.getElementById('username');
+    const passInput = document.getElementById('password');
+
+    document.getElementById('demo-user')?.addEventListener('click', () => {
+        if (userInput) { userInput.value = 'admin'; userInput.focus(); }
+    });
+    document.getElementById('demo-pass')?.addEventListener('click', () => {
+        if (passInput) { passInput.value = 'admin123'; passInput.focus(); }
+    });
+})();
+</script>
+</body>
+</html>

@@ -779,20 +779,11 @@
                 </div>
 
                 {% if muebles|length > 0 %}
-                {% set heroPortada = muebles|first.imagenPortada %}
                 <div class="hero-product-float">
-                    <div class="hero-product-img">
-                        {% if 'placehold.co' in heroPortada %}
-                        <div class="card-img-placeholder" style="border-radius:18px;">
-                            <div class="placeholder-glow" aria-hidden="true"></div>
-                            <span class="placeholder-icon" aria-hidden="true">🛋️</span>
-                            <span class="placeholder-name">{{ muebles|first.name }}</span>
-                        </div>
-                        {% else %}
-                        <img src="{{ heroPortada }}"
-                             alt="{{ muebles|first.name }}"
-                             loading="eager">
-                        {% endif %}
+                    <div class="hero-product-img"
+                         data-controller="mini-viewer"
+                         data-mini-viewer-src-value="{{ muebles|first.modelGlb }}"
+                         data-mini-viewer-name-value="{{ muebles|first.name }}">
                         <div class="hero-product-sheen"></div>
                     </div>
                     <div class="hero-product-label">
@@ -942,20 +933,10 @@
                data-turbo-frame="_top"
                data-reveal>
 
-                <div class="card-img-wrap">
-                    {% set portada = mueble.imagenPortada %}
-                    {% if 'placehold.co' in portada %}
-                    {# ── Dark space placeholder (no image) ── #}
-                    <div class="card-img-placeholder">
-                        <div class="placeholder-glow" aria-hidden="true"></div>
-                        <span class="placeholder-icon" aria-hidden="true">🛋️</span>
-                        <span class="placeholder-name">{{ mueble.name }}</span>
-                    </div>
-                    {% else %}
-                    <img src="{{ portada }}"
-                         alt="{{ mueble.name }}"
-                         loading="{{ loop.index <= 3 ? 'eager' : 'lazy' }}">
-                    {% endif %}
+                <div class="card-img-wrap"
+                     data-controller="mini-viewer"
+                     data-mini-viewer-src-value="{{ mueble.modelGlb }}"
+                     data-mini-viewer-name-value="{{ mueble.name }}">
 
                     <div class="card-img-overlay" aria-hidden="true"></div>
 

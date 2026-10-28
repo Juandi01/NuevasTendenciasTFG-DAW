@@ -22,8 +22,8 @@ class Mueble
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $descriptionAi = null;
 
-    #[ORM\Column]
-    private ?bool $isActive = null;
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $isActive = false;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $price = null;
@@ -96,7 +96,7 @@ class Mueble
         return $this;
     }
 
-    public function isActive(): ?bool
+    public function isActive(): bool
     {
         return $this->isActive;
     }
@@ -195,10 +195,45 @@ class Mueble
     }
 
     /**
+     * Ruta al modelo .glb o cadena vacía si no existe ninguno disponible.
+     * Orden: ProductModel (VichUploader) → slug por convención → ''.
+     */
+    public function getModelGlb(): string
+    {
+        foreach ($this->productModels as $pm) {
+            if ($pm->getModelName()) {
+                return '/uploads/models/' . $pm->getModelName();
+            }
+        }
+
+        $slug = $this->name ?? '';
+        $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $slug) ?: $slug;
+        $slug = strtolower($slug);
+        $slug = preg_replace('/[^a-z0-9]+/', '', $slug);
+
+        $localPath = dirname(__DIR__, 2) . '/public/models/' . $slug . '.glb';
+        if (file_exists($localPath)) {
+            return '/models/' . $slug . '.glb';
+        }
+
+        return '';
+    }
+
+    /**
      * Devuelve la primera foto que encuentre para la portada
      */
     public function getImagenPortada(): string
     {
+        foreach ($this->medias as $media) {
+            if ($media->isPortada() && $media->getImageName()) {
+                return '/uploads/product_images/' . $media->getImageName();
+            }
+        }
+        foreach ($this->medias as $media) {
+            if ($media->getImageName()) {
+                return '/uploads/product_images/' . $media->getImageName();
+            }
+        }
         foreach ($this->variations as $variation) {
             foreach ($variation->getOptions() as $option) {
                 if (!$option->getImages()->isEmpty()) {
@@ -206,8 +241,8 @@ class Mueble
                 }
             }
         }
-        
-        return 'https://placehold.co/600x400?text=Sin+Foto';
+
+        return 'https://placehold.co/600x400/0a0a1a/00f5ff?text=' . rawurlencode($this->name ?? 'Producto');
     }
 
     /**

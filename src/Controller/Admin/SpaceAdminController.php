@@ -121,6 +121,21 @@ class SpaceAdminController extends AbstractController
         ]);
     }
 
+    // ── Productos — toggle active ────────────────────────────
+
+    #[Route('/productos/{id}/toggle-active', name: 'app_admin_producto_toggle_active', methods: ['POST'])]
+    public function productoToggleActive(
+        Mueble $mueble,
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        if ($this->isCsrfTokenValid('toggle-' . $mueble->getId(), $request->request->get('_token'))) {
+            $mueble->setIsActive(!$mueble->isActive());
+            $em->flush();
+        }
+        return $this->redirectToRoute('app_admin_producto_edit', ['id' => $mueble->getId()]);
+    }
+
     // ── Productos — delete ───────────────────────────────────
 
     #[Route('/productos/{id}/borrar', name: 'app_admin_producto_delete', methods: ['POST'])]

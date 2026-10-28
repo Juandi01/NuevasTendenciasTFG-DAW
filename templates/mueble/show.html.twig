@@ -575,39 +575,14 @@ textarea.modal-input { resize: vertical; min-height: 72px; }
         <div class="orbit-ring orbit-a" aria-hidden="true"></div>
         <div class="orbit-ring orbit-b" aria-hidden="true"></div>
 
-        <div class="gallery-main" id="gallery-main">
-          {% if 'placehold.co' in firstImage %}
-            <div class="gallery-placeholder">
-              <div class="gallery-placeholder-icon">🛋️</div>
-              <div class="gallery-placeholder-name">{{ mueble.name }}</div>
-            </div>
-          {% else %}
-            <img id="gallery-main-img" src="{{ firstImage }}" alt="{{ mueble.name }}" loading="eager">
-          {% endif %}
+        <div class="gallery-main" id="gallery-main"
+             data-controller="mini-viewer"
+             data-mini-viewer-src-value="{{ mueble.modelGlb }}"
+             data-mini-viewer-name-value="{{ mueble.name }}">
           <div class="gallery-main-glow" aria-hidden="true"></div>
         </div>
       </div>
 
-      {# Thumbnails #}
-      {% if gallery|length > 1 %}
-      <div class="gallery-thumbs" id="gallery-thumbs" style="margin-top: 68px;">
-        {% for item in gallery %}
-        <div class="gallery-thumb {{ loop.first ? 'active' : '' }}"
-             data-url="{{ item.url }}"
-             data-name="{{ item.name }}"
-             data-hex="{{ item.hex }}"
-             data-index="{{ loop.index0 }}"
-             title="{{ item.name }}"
-             role="button" tabindex="0">
-          {% if 'placehold.co' in item.url %}
-            <div class="thumb-placeholder" style="background:{{ item.hex }};">🛋️</div>
-          {% else %}
-            <img src="{{ item.url }}" alt="{{ item.name }}" loading="lazy">
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
     </div>
 
     {# ── RIGHT · Info ────────────────────────────────────────── #}
@@ -727,6 +702,16 @@ textarea.modal-input { resize: vertical; min-height: 72px; }
           </span>
           {% endfor %}
         </div>
+      </div>
+      {% endif %}
+
+      {# Placeholder when no customisation data yet #}
+      {% if gallery|length == 0 and tapicerias|length == 0 and patas|length == 0 %}
+      <div style="border:1px dashed rgba(0,245,255,.2); border-radius:12px; padding:18px 20px;
+                  background:rgba(0,245,255,.03); margin-bottom:24px;">
+        <p style="margin:0; font-size:12px; color:rgba(232,234,255,.4); text-align:center; line-height:1.7;">
+          ✦&nbsp; Las opciones de personalización de este modelo<br>estarán disponibles próximamente
+        </p>
       </div>
       {% endif %}
 
@@ -872,6 +857,18 @@ textarea.modal-input { resize: vertical; min-height: 72px; }
       </div>
       <h3 class="success-title">Tu solicitud ha viajado<br>al universo</h3>
       <p class="success-sub">Nos pondremos en contacto en menos de 48 horas.</p>
+      <a class="success-cta" id="pres-pdf-btn" href="#" target="_blank" style="display:none; align-items:center; gap:7px;
+         background:linear-gradient(135deg,rgba(0,245,255,.15),rgba(123,47,255,.15));
+         border:1px solid rgba(0,245,255,.5); color:var(--cyan);
+         text-shadow:0 0 10px rgba(0,245,255,.5);">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <polyline points="9 15 12 18 15 15"/>
+        </svg>
+        Descargar PDF del presupuesto
+      </a>
       <button class="success-cta" id="pres-success-close" type="button">Cerrar</button>
     </div>
   </div>
@@ -972,6 +969,11 @@ textarea.modal-input { resize: vertical; min-height: 72px; }
             if (data.success) {
                 if (formView)    formView.style.display = 'none';
                 if (successView) successView.classList.add('show');
+                const pdfBtn = document.getElementById('pres-pdf-btn');
+                if (pdfBtn && data.pdfUrl) {
+                    pdfBtn.href = data.pdfUrl;
+                    pdfBtn.style.display = 'inline-flex';
+                }
             } else {
                 if (errorEl) { errorEl.textContent = data.error ?? 'Error al enviar. Inténtalo de nuevo.'; errorEl.style.display = 'block'; }
             }

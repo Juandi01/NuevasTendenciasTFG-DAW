@@ -24,6 +24,7 @@ class PresupuestoController extends AbstractController
         return $this->render('mueble/configurator.html.twig', [
             'mueble'     => $mueble,
             'productKey' => $this->toProductKey($mueble->getName()),
+            'lockedMode' => true,
         ]);
     }
 
@@ -97,10 +98,10 @@ class PresupuestoController extends AbstractController
         ]);
 
         $pdfContent  = $this->buildPdf($presupuesto);
-        $pdfFilename = sprintf('presupuesto-%d-sofasmart.pdf', $presupuesto->getId());
+        $pdfFilename = sprintf('presupuesto-%d-nuevastendencias.pdf', $presupuesto->getId());
 
         $email = (new Email())
-            ->from('noreply@sofasmart.es')
+            ->from('noreply@nuevastendencias.es')
             ->to($presupuesto->getCustomerEmail())
             ->subject('Tu solicitud de presupuesto ha sido recibida - Nuevas Tendencias')
             ->html($emailHtml)
@@ -129,7 +130,7 @@ class PresupuestoController extends AbstractController
     #[Route('/presupuesto/{id}/pdf', name: 'app_presupuesto_pdf', methods: ['GET'])]
     public function pdf(Presupuesto $presupuesto): Response
     {
-        $filename = sprintf('presupuesto-%d-sofasmart.pdf', $presupuesto->getId());
+        $filename = sprintf('presupuesto-%d-nuevastendencias.pdf', $presupuesto->getId());
 
         return new Response(
             $this->buildPdf($presupuesto),

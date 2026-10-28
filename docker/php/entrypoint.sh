@@ -34,7 +34,8 @@ php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migratio
 echo "Warming up cache..."
 php bin/console cache:warmup
 
-chown -R www-data:www-data var/
+mkdir -p var/cache/dev/profiler var/cache/prod/profiler var/log
+chmod -R 777 var/
 
 echo "Application ready."
 exec "$@"

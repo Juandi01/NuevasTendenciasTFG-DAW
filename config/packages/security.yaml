@@ -17,12 +17,12 @@ security:
             lazy: true
             provider: app_user_provider
             form_login:
-                login_path: app_login
-                check_path: app_login
-                default_target_path: app_home
+                login_path: app_admin_login
+                check_path: app_admin_login
+                default_target_path: app_admin_dashboard
                 username_parameter: _username
                 password_parameter: _password
-                enable_csrf: true
+                enable_csrf: false
                 remember_me: true
             remember_me:
                 secret: '%kernel.secret%'
@@ -33,10 +33,8 @@ security:
                 target: app_home
 
     access_control:
-        - { path: ^/login,    roles: PUBLIC_ACCESS }
-        - { path: ^/registro, roles: PUBLIC_ACCESS }
-        - { path: ^/admin,    roles: ROLE_ADMIN }
-        - { path: ^/perfil,   roles: ROLE_USER }
+        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
+        - { path: ^/admin,       roles: ROLE_ADMIN }
 
 when@test:
     security:

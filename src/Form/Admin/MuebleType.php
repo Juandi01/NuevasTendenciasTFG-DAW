@@ -6,7 +6,6 @@ use App\Entity\Category;
 use App\Entity\Mueble;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -65,10 +64,6 @@ class MuebleType extends AbstractType
                 'scale'    => 1,
                 'attr'     => ['step' => '0.1', 'min' => '0', 'placeholder' => '0.0'],
                 'constraints' => [new PositiveOrZero()],
-            ])
-            ->add('isActive', CheckboxType::class, [
-                'label'    => 'Producto activo',
-                'required' => false,
             ])
         ;
     }

@@ -32,3 +32,43 @@ html { scroll-behavior: smooth; }
 
 /* Selection */
 ::selection { background: rgba(0,245,255,.25); color: #e8eaff; }
+
+/* ── Mini 3-D viewer (mini_viewer_controller) ─────────────────── */
+.mv-spinner {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    background: rgba(6,6,15,.75);
+}
+.mv-spinner-ring {
+    width: 34px; height: 34px;
+    border: 2px solid rgba(0,245,255,.15);
+    border-top-color: #00f5ff;
+    border-radius: 50%;
+    animation: mvSpin .85s linear infinite;
+}
+@keyframes mvSpin { to { transform: rotate(360deg); } }
+.mv-spinner-text {
+    font-size: 10px; color: rgba(0,245,255,.55);
+    letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
+}
+.mv-fallback {
+    position: absolute; inset: 0; z-index: 4;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(135deg, #0d0d2b 0%, #080820 100%);
+}
+.mv-fallback::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+        linear-gradient(rgba(0,245,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+.mv-fallback-icon { font-size: 38px; opacity: .45; position: relative; }
+.mv-fallback-name {
+    font-size: 11px; color: rgba(232,234,255,.4);
+    text-align: center; padding: 0 16px; position: relative;
+    letter-spacing: .04em; line-height: 1.4;
+}

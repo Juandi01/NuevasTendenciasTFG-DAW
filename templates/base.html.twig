@@ -326,16 +326,8 @@
             </svg>
             Diseña tu sofá
         </a>
-        {% if app.user %}
-            {% if is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('app_admin_dashboard') }}" class="nav-admin-link" title="Panel de administración">⚙ Admin</a>
-            {% endif %}
-            <a href="{{ path('app_perfil') }}" class="nav-admin-link" title="Mi perfil" style="gap:6px;">
-                👤 {{ app.user.nombre }}
-            </a>
-        {% else %}
-            <a href="{{ path('app_login') }}" class="nav-admin-link">Iniciar sesión</a>
-            <a href="{{ path('app_register') }}" class="nav-cta" style="background:transparent;border:1px solid rgba(0,245,255,.3);color:#00f5ff;">Registrarse</a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_admin_dashboard') }}" class="nav-admin-link" title="Panel de administración">⚙ Admin</a>
         {% endif %}
     </div>
 </nav>
