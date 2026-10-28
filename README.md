@@ -7,7 +7,7 @@
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-Aplicación web Full-Stack desarrollada como Proyecto Final de Grado (DAW). Simula un **showroom virtual interactivo de sofás con temática espacial**, integrando un **configurador 3D en tiempo real (Three.js)**, un sistema B2B/B2C de **solicitud y gestión de presupuestos a medida**, **análisis de sentimiento automatizado en reseñas** mediante Magic Links y backoffice administrativo con **EasyAdmin 5**.
+Aplicación web Full-Stack desarrollada como Proyecto Final de Grado (DAW). Simula un **showroom virtual interactivo de sofás con temática espacial**, integrando un **configurador 3D en tiempo real (Three.js)**, un sistema B2B/B2C de **solicitud y gestión de presupuestos a medida**, **análisis de sentimiento automatizado en reseñas** mediante Magic Links y backoffice administrativo con **Space Admin 1**.
 
 ---
 
@@ -23,7 +23,7 @@ Aplicación web Full-Stack desarrollada como Proyecto Final de Grado (DAW). Simu
 - **🤖 Reseñas Verificadas con Magic Links & Análisis de Sentimiento (`AIService`):**
   - Generación de tokens únicos (`UUID v4`) de un solo uso con expiración a los 30 días (`ReviewToken`) para garantizar valoraciones reales.
   - Clasificación automática del sentimiento de cada reseña al persistirse en base de datos mediante `AIService::analyzeSentiment()`.
-- **🛠️ Backoffice Completo (EasyAdmin 5):**
+- **🛠️ Backoffice Completo (Space Admin 1):**
   - Administración integral de la jerarquía de catálogo (`Category` → `Mueble` → `Variation` → `Option` → `Image`), subida de imágenes y modelos 3D con `VichUploaderBundle` y moderación de presupuestos y reseñas.
 
 ---
@@ -38,7 +38,7 @@ Arquitectura monolítica moderna **100% libre de pasos de compilación Node/npm*
 | **ORM & Base de Datos** | Doctrine ORM 3 + Doctrine Migrations + PostgreSQL 16 (Docker) |
 | **Frontend & Interactividad** | Twig 3 + Tailwind CSS + Hotwired (Stimulus + Turbo Frames/Streams) |
 | **Motor 3D** | Three.js (`sofa_configurator_controller.js`) |
-| **Administración & Archivos** | EasyAdmin Bundle 5 + VichUploaderBundle |
+| **Administración & Archivos** | Space Admin 1 + VichUploaderBundle |
 | **Servicios & CLI** | `AIService` (análisis de sentimiento) + Comandos de consola personalizados |
 
 ### Modelo de Dominio
@@ -64,7 +64,7 @@ Arquitectura monolítica moderna **100% libre de pasos de compilación Node/npm*
 | `/presupuesto/solicitar` | `app_presupuesto_solicitar` | Endpoint (`POST`) para registrar la configuración 3D y solicitud del cliente |
 | `/mueble/{id}/simular-compra` | `app_mueble_simulate_purchase` | Endpoint (`POST`) que genera un `ReviewToken` de prueba para evaluar el flujo |
 | `/opinar/{token}` | `app_review_form` | Formulario de valoración accesible mediante Magic Link de un solo uso |
-| `/admin` | `admin` | Dashboard administrativo en EasyAdmin 5 |
+| `/admin` | `admin` | Dashboard administrativo en Space Admin 1 |
 
 ---
 
@@ -91,7 +91,7 @@ Arquitectura monolítica moderna **100% libre de pasos de compilación Node/npm*
 
 5. **Accesos locales:**
    - **Showroom Virtual:** `[http://127.0.0.1:8000](http://127.0.0.1:8000)`
-   - **Panel Admin (EasyAdmin):** `[http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)`
+   - **Panel Admin (Space Admin 1):** `[http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)`
 
 ---
 
